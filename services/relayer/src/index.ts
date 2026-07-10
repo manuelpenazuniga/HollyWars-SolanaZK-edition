@@ -1,3 +1,2 @@
-// Relayer service: gasless relay of votes and medal claims, rate-limited by IP.
-// Sees proofs; never sees identities. Runs as a separate process from the attestor.
+// T9: relay-vote + relay-claim + rate-limit IP; NUNCA identidad
 export {};

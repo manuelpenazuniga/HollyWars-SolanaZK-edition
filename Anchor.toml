@@ -20,4 +20,5 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "npx ts-mocha -p ./tsconfig.json tests/holy-wars-core.ts --timeout 120000"
+test = "npx ts-mocha -p ./tsconfig.json tests/holy-wars-vote.ts --timeout 120000"
+test-vote = "npx ts-mocha -p ./tsconfig.json tests/holy-wars-vote.ts --timeout 180000"

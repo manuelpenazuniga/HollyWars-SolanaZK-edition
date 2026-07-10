@@ -55,3 +55,22 @@ pub struct CensusLeafMarker {}
 impl CensusLeafMarker {
     pub const SPACE: usize = 8;
 }
+
+#[account]
+pub struct Nullifier {
+    pub bump: u8,
+}
+
+impl Nullifier {
+    pub const SPACE: usize = 8 + 1;
+}
+
+#[event]
+pub struct VoteCast {
+    pub war_id: u64,
+    pub side: u8,
+    pub weight: u8,
+    pub nullifier_hash: [u8; 32],
+    pub battle_cry: String,
+    pub timestamp: i64,
+}

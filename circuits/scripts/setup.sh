@@ -26,11 +26,24 @@ else
 fi
 
 echo ""
-echo "=== Groth16 Setup (phase 2) ==="
-npx snarkjs groth16 setup "$BUILD_DIR/vote.r1cs" "$BUILD_DIR/pot16_final.ptau" "$BUILD_DIR/vote_final.zkey"
+echo "=== Groth16 Setup (phase 2 init) ==="
+npx snarkjs groth16 setup "$BUILD_DIR/vote.r1cs" "$BUILD_DIR/pot16_final.ptau" "$BUILD_DIR/vote_0000.zkey"
 
 echo ""
-echo "=== Verifying zkey ==="
+echo "=== Phase-2 contribution (SECURITY-CRITICAL) ==="
+# Without a real phase-2 contribution, delta == gamma == G2 generator, which lets an
+# attacker FORGE valid proofs for ANY public inputs without a witness (proof_a=-alpha,
+# proof_b=beta, proof_c=-vk_x). The contribution randomizes delta (toxic waste) so
+# gamma != delta and forgery requires the discrete log of delta. (Caught by GPT-5.5 audit.)
+ENTROPY="$(openssl rand -hex 64)"
+npx snarkjs zkey contribute "$BUILD_DIR/vote_0000.zkey" "$BUILD_DIR/vote_c1.zkey" --name="holywars-phase2-1" -e="$ENTROPY"
+# A public verifiable random beacon finalizes the ceremony (any prior contributor can no longer cheat).
+npx snarkjs zkey beacon "$BUILD_DIR/vote_c1.zkey" "$BUILD_DIR/vote_final.zkey" \
+  0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20 10 --name="holywars-beacon"
+rm -f "$BUILD_DIR/vote_0000.zkey" "$BUILD_DIR/vote_c1.zkey"
+
+echo ""
+echo "=== Verifying zkey (incl. phase-2 contributions) ==="
 npx snarkjs zkv "$BUILD_DIR/vote.r1cs" "$BUILD_DIR/pot16_final.ptau" "$BUILD_DIR/vote_final.zkey"
 
 echo ""

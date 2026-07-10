@@ -1003,6 +1003,7 @@ name = "holy-wars"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "groth16-solana",
 ]
 
 [[package]]

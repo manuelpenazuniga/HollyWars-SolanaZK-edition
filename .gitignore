@@ -1,39 +1,10 @@
-# Rust / Anchor
 target/
+node_modules/
 .anchor/
 test-ledger/
-**/*.rs.bk
-
-# Node
-node_modules/
-dist/
-.next/
-*.tsbuildinfo
-
-# ZK artifacts (regenerated locally from the circuits — never commit)
 *.zkey
 *.wasm
-*.r1cs
-*.sym
-*.ptau
 build/
-**/*_js/
-
-# Keys & secrets (never commit)
-*keypair*.json
-*.pem
-.env
-.env.*
-!.env.example
-
-# OS
-.DS_Store
-
-# Local project notes / internal working docs (not part of the public project)
-docs/
-.claude/
-.agents/
-ARCHITECTURE.md
-BITACORA.md
-ESTADO.md
-HOLY-WARS-SPEC.md
+.next/
+dist/
+.env*
