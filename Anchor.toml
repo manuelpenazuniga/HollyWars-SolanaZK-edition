@@ -1,0 +1,23 @@
+[toolchain]
+package_manager = "npm"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.devnet]
+holy_wars = "EZeoVRJSZbwBPTiVyHKgafj9bWd8GfsKP8oZymCuj7eu"
+
+[programs.localnet]
+holy_wars = "r4VBoNgAYkzK86dGoLAHN7ZZQVjKua2sgKNDxWM9Hxe"
+verifier_spike = "AwLH4verEbF86tSBtFSbpCKVzTAGsRL2c8M3ZPSXdMYa"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "npx ts-mocha -p ./tsconfig.json tests/holy-wars-core.ts --timeout 120000"

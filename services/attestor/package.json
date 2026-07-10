@@ -1,0 +1,12 @@
+{
+  "name": "@holywars/attestor",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "echo TODO"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

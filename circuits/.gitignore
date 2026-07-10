@@ -1,0 +1,6 @@
+*.zkey
+*.wasm
+*.r1cs
+*.ptau
+build/
+pot*.ptau

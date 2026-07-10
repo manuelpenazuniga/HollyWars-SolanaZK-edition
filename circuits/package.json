@@ -1,0 +1,17 @@
+{
+  "name": "@holywars/circuits",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "compile": "circom vote.circom --r1cs --wasm --sym -o build/",
+    "setup": "bash scripts/setup.sh",
+    "test": "node test/test-vote.js"
+  },
+  "dependencies": {
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7"
+  },
+  "devDependencies": {
+    "snarkjs": "^0.7.6"
+  }
+}
