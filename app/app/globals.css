@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-war-black text-cream font-mono;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(245, 240, 225, 0.03) 2px,
+        rgba(245, 240, 225, 0.03) 4px
+      );
+  }
+}
+
+@layer components {
+  .propaganda-title {
+    @apply font-stencil uppercase tracking-wider text-cream;
+    text-shadow: 2px 2px 0 #C41E3A, 4px 4px 0 rgba(0,0,0,0.3);
+  }
+
+  .war-card {
+    @apply border-2 border-cream/20 bg-war-black/80 backdrop-blur-sm;
+    box-shadow: inset 0 0 20px rgba(196, 30, 58, 0.1), 0 0 15px rgba(0,0,0,0.5);
+  }
+
+  .tally-bar {
+    @apply h-8 transition-all duration-700 ease-out relative overflow-hidden;
+  }
+
+  .tally-bar::after {
+    content: '';
+    @apply absolute inset-0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(0,0,0,0.15) 4px,
+      rgba(0,0,0,0.15) 8px
+    );
+  }
+
+  .btn-propaganda {
+    @apply px-6 py-3 font-stencil uppercase tracking-wider border-2 transition-all duration-200;
+    @apply hover:scale-105 active:scale-95;
+  }
+
+  .btn-primary {
+    @apply btn-propaganda bg-war-red border-war-red text-cream;
+    @apply hover:bg-war-red-dark hover:border-war-red-dark;
+    box-shadow: 0 4px 0 #8B0000, 0 6px 10px rgba(0,0,0,0.4);
+  }
+
+  .btn-secondary {
+    @apply btn-propaganda bg-transparent border-cream/40 text-cream;
+    @apply hover:bg-cream/10 hover:border-cream/60;
+  }
+
+  .ticker-item {
+    @apply whitespace-nowrap px-6 py-2 border-r border-cream/20 text-sm;
+  }
+
+  .medal-card {
+    @apply border-2 border-cream/20 bg-war-black/60 p-4 text-center transition-all duration-300;
+    @apply hover:border-war-gold hover:shadow-lg hover:shadow-war-gold/20;
+  }
+
+  .medal-claimed {
+    @apply opacity-40 grayscale;
+  }
+
+  .input-war {
+    @apply w-full bg-war-black/80 border-2 border-cream/30 text-cream px-4 py-3 font-mono;
+    @apply focus:outline-none focus:border-war-red focus:ring-1 focus:ring-war-red/50;
+    @apply placeholder:text-cream/30;
+  }
+
+  .terminal-text {
+    @apply font-mono text-cream/70;
+  }
+
+  .side-a-bg {
+    @apply bg-war-red;
+  }
+
+  .side-b-bg {
+    @apply bg-war-green;
+  }
+
+  .frontier-line {
+    @apply absolute top-0 bottom-0 w-1 bg-cream z-10;
+    box-shadow: 0 0 8px rgba(245, 240, 225, 0.6);
+  }
+
+  .stamp {
+    @apply inline-block border-4 border-war-red px-4 py-2 font-stencil uppercase tracking-widest text-war-red;
+    transform: rotate(-3deg);
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+  }
+}
