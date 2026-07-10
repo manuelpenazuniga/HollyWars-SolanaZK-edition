@@ -1,7 +1,7 @@
 /**
- * serialize.ts — SPIKE T5: snarkjs proof → groth16-solana byte format
+ * serialize.ts — snarkjs proof -> groth16-solana byte format
  *
- * DELIVERABLE CLAVE. Reusable por T3/T5a.
+ * Reusable helper for exporting proofs/verifying keys to the on-chain verifier.
  *
  * Este script convierte proof.json + public.json generados por snarkjs
  * al formato de bytes que espera `groth16-solana` (Light Protocol) en

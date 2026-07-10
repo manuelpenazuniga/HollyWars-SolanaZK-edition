@@ -1,2 +1,3 @@
 # Scripts
-deploy, create-wars, seed, verify-root — T6/T7/T13
+
+Operational scripts: devnet deploy, war creation, census root verification, and demo seeding.
