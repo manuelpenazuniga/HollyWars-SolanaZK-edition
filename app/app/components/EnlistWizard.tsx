@@ -1,27 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const STEPS = [
-  {
-    id: 1,
-    title: "CONNECT YOUR WALLET",
-    subtitle: "Your identity on the chain. Your soul on the line.",
-    icon: "🔗",
-  },
-  {
-    id: 2,
-    title: "CONNECT YOUR GITHUB",
-    subtitle: "We need to measure your passion. Your commit history speaks.",
-    icon: "🐙",
-  },
-  {
-    id: 3,
-    title: "YOUR PASSION WEIGHT",
-    subtitle: "The attester has weighed your soul. This is your burden.",
-    icon: "⚖",
-  },
-];
+import Link from "next/link";
 
 const MOCK_GITHUB = {
   username: "dev_soldier_42",
@@ -30,35 +10,105 @@ const MOCK_GITHUB = {
   repos: 23,
 };
 
+/* The Proof of Passion reveal — the attestor has read your repos and
+   weighed your soul. Weights are per side (you might vote either way),
+   coarse on purpose: a fine-grained weight is a fingerprint. */
 const MOCK_WEIGHTS = [
-  { war: "Tabs vs Spaces", weightA: 2, weightB: 3, coherent: "spaces" },
-  { war: "Vim vs Emacs", weightA: 1, weightB: 2, coherent: "emacs" },
-  { war: "Dark vs Light", weightA: 3, weightB: 1, coherent: "dark" },
+  {
+    war: "Tabs vs Spaces",
+    sideA: "TABS",
+    sideB: "SPACES",
+    weightA: 1,
+    weightB: 3,
+    evidence: "87% of sampled lines indented with spaces, across 23 repos",
+    hypocrisy: "Voting TABS would weigh 1/3 — the census remembers your spaces.",
+  },
+  {
+    war: "Vim vs Emacs",
+    sideA: "VIM",
+    sideB: "EMACS",
+    weightA: 2,
+    weightB: 1,
+    evidence: ".vimrc found — 214 lines, last touched 3 days ago",
+    hypocrisy: null,
+  },
+  {
+    war: "Dark vs Light",
+    sideA: "DARK",
+    sideB: "LIGHT",
+    weightA: 3,
+    weightB: 1,
+    evidence: "every screenshot you ever committed has a dark background",
+    hypocrisy: null,
+  },
 ];
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
+function StepIndicator({ current }: { current: number }) {
+  const steps = ["Wallet", "GitHub", "Passion"];
   return (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {Array.from({ length: total }, (_, i) => (
-        <div key={i} className="flex items-center">
-          <div
-            className={`w-10 h-10 border-2 flex items-center justify-center font-stencil text-sm transition-all duration-300 ${
-              i + 1 <= current
-                ? "border-war-red bg-war-red/20 text-war-red"
-                : "border-cream/30 text-cream/30"
-            }`}
-          >
-            {i + 1 <= current ? "✓" : i + 1}
-          </div>
-          {i < total - 1 && (
-            <div
-              className={`w-12 h-0.5 transition-colors duration-300 ${
-                i + 1 < current ? "bg-war-red" : "bg-cream/20"
-              }`}
-            />
-          )}
-        </div>
-      ))}
+    <ol className="flex items-center justify-center gap-3 mb-8">
+      {steps.map((label, i) => {
+        const n = i + 1;
+        const state =
+          n < current ? "done" : n === current ? "active" : "todo";
+        return (
+          <li key={label} className="flex items-center gap-3">
+            <span className="flex items-center gap-2">
+              <span
+                className={`w-8 h-8 flex items-center justify-center font-pixel text-xs border transition-colors ${
+                  state === "done"
+                    ? "bg-arcane text-void border-arcane"
+                    : state === "active"
+                      ? "border-arcane text-arcane"
+                      : "border-panel-edge text-bone/30"
+                }`}
+              >
+                {state === "done" ? "✓" : n}
+              </span>
+              <span
+                className={`hidden sm:inline font-sans text-sm ${
+                  state === "todo" ? "text-bone/30" : "text-bone/80"
+                }`}
+              >
+                {label}
+              </span>
+            </span>
+            {n < steps.length && (
+              <span
+                className={`w-8 h-px ${n < current ? "bg-arcane" : "bg-panel-edge"}`}
+                aria-hidden
+              />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function WeightGauge({
+  label,
+  weight,
+  tone,
+}: {
+  label: string;
+  weight: number;
+  tone: "p1" | "p2";
+}) {
+  const toneClass = tone === "p1" ? "bg-p1" : "bg-p2";
+  const textClass = tone === "p1" ? "text-p1" : "text-p2";
+  return (
+    <div className="flex items-center gap-2">
+      <span className={`hud-label w-14 ${textClass}`}>{label}</span>
+      <div className="flex gap-px" aria-label={`weight ${weight} of 3`}>
+        {[1, 2, 3].map((n) => (
+          <span
+            key={n}
+            className={`w-3 h-3 ${n <= weight ? toneClass : "bg-panel-edge"}`}
+          />
+        ))}
+      </div>
+      <span className="font-mono text-[11px] text-bone/40">×{weight}</span>
     </div>
   );
 }
@@ -68,133 +118,142 @@ export function EnlistWizard() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
 
-  const handleNext = () => {
-    if (step === 1) setWalletConnected(true);
-    if (step === 2) setGithubConnected(true);
-    if (step < 3) setStep(step + 1);
-  };
+  const advance = () => setStep((s) => Math.min(s + 1, 3));
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="text-center space-y-3 mb-8">
-        <div className="stamp inline-block">ENLIST NOW</div>
-        <h2 className="propaganda-title text-3xl md:text-4xl">
-          ANSWER THE CALL
+      <div className="mb-8">
+        <span className="hud-label">Enlistment office</span>
+        <h2 className="font-sans font-bold text-3xl md:text-4xl tracking-tight mt-2 mb-2">
+          Answer the call
         </h2>
-        <p className="terminal-text">
-          Three steps between you and eternity. No turning back.
+        <p className="font-sans text-sm text-bone/60 max-w-lg">
+          Three steps between you and the eternal census. Your GitHub gets you
+          in; your commit history sets your weight; your secrets never leave
+          this browser.
         </p>
       </div>
 
-      <StepIndicator current={step} total={STEPS.length} />
+      <StepIndicator current={step} />
 
-      <div className="war-card p-8">
+      <div className="panel p-6 md:p-8">
         {step === 1 && (
-          <div className="text-center space-y-6">
-            <span className="text-5xl">{STEPS[0].icon}</span>
+          <div className="space-y-6">
             <div>
-              <h3 className="font-stencil text-xl tracking-wider text-cream mb-2">
-                {STEPS[0].title}
+              <h3 className="font-sans font-bold text-xl mb-1">
+                Connect your wallet
               </h3>
-              <p className="terminal-text text-sm">{STEPS[0].subtitle}</p>
+              <p className="font-sans text-sm text-bone/60">
+                Only used to receive your medal later — the ballot box will
+                never see it.
+              </p>
             </div>
 
             {walletConnected ? (
               <div className="space-y-3">
-                <div className="border-2 border-war-green/50 bg-war-green/10 p-4 font-mono text-sm">
-                  <p className="text-war-green">✓ WALLET CONNECTED</p>
-                  <p className="text-cream/60 mt-1">
-                    Address: 7xKp...3VmN (devnet)
-                  </p>
+                <div className="panel-inset p-4 font-mono text-sm">
+                  <p className="text-gold">✓ WALLET CONNECTED</p>
+                  <p className="text-bone/50 mt-1">7xKp…3VmN · devnet</p>
                 </div>
-                <button onClick={handleNext} className="btn-primary w-full">
-                  PROCEED →
+                <button onClick={advance} className="btn-primary w-full">
+                  Continue →
                 </button>
               </div>
             ) : (
-              <button onClick={handleNext} className="btn-primary w-full">
-                CONNECT WALLET
+              <button
+                onClick={() => setWalletConnected(true)}
+                className="btn-primary w-full"
+              >
+                Connect wallet
               </button>
             )}
           </div>
         )}
 
         {step === 2 && (
-          <div className="text-center space-y-6">
-            <span className="text-5xl">{STEPS[1].icon}</span>
+          <div className="space-y-6">
             <div>
-              <h3 className="font-stencil text-xl tracking-wider text-cream mb-2">
-                {STEPS[1].title}
+              <h3 className="font-sans font-bold text-xl mb-1">
+                Connect your GitHub
               </h3>
-              <p className="terminal-text text-sm">{STEPS[1].subtitle}</p>
+              <p className="font-sans text-sm text-bone/60">
+                One aged, active GitHub account = one census entry per war.
+                A thousand wallets won&apos;t get you a second ballot.
+              </p>
             </div>
 
             {githubConnected ? (
               <div className="space-y-3">
-                <div className="border-2 border-war-green/50 bg-war-green/10 p-4 font-mono text-sm text-left">
-                  <p className="text-war-green">✓ GITHUB VERIFIED</p>
-                  <div className="mt-2 space-y-1 text-cream/60">
-                    <p>User: {MOCK_GITHUB.username}</p>
-                    <p>Account age: {MOCK_GITHUB.accountAge}</p>
-                    <p>Total commits: {MOCK_GITHUB.commits}</p>
-                    <p>Public repos: {MOCK_GITHUB.repos}</p>
-                  </div>
+                <div className="panel-inset p-4 font-mono text-sm space-y-1">
+                  <p className="text-gold">✓ GITHUB VERIFIED</p>
+                  <p className="text-bone/50">user: {MOCK_GITHUB.username}</p>
+                  <p className="text-bone/50">
+                    account age: {MOCK_GITHUB.accountAge} · commits:{" "}
+                    {MOCK_GITHUB.commits.toLocaleString("en-US")} · repos:{" "}
+                    {MOCK_GITHUB.repos}
+                  </p>
                 </div>
-                <button onClick={handleNext} className="btn-primary w-full">
-                  CALCULATE PASSION →
+                <button onClick={advance} className="btn-arcane w-full">
+                  Measure my passion →
                 </button>
               </div>
             ) : (
-              <button onClick={handleNext} className="btn-primary w-full">
-                CONNECT GITHUB
+              <button
+                onClick={() => setGithubConnected(true)}
+                className="btn-primary w-full"
+              >
+                Authorize GitHub
               </button>
             )}
           </div>
         )}
 
         {step === 3 && (
-          <div className="text-center space-y-6">
-            <span className="text-5xl">{STEPS[2].icon}</span>
+          <div className="space-y-6">
             <div>
-              <h3 className="font-stencil text-xl tracking-wider text-cream mb-2">
-                {STEPS[2].title}
+              <h3 className="font-sans font-bold text-xl mb-1">
+                Your passion, weighed
               </h3>
-              <p className="terminal-text text-sm">{STEPS[2].subtitle}</p>
+              <p className="font-sans text-sm text-bone/60">
+                The attestor read your repos. These are your ballot weights —
+                per side, because what you vote is your secret.
+              </p>
             </div>
 
-            <div className="space-y-3 text-left">
+            <ul className="space-y-3">
               {MOCK_WEIGHTS.map((w) => (
-                <div
-                  key={w.war}
-                  className="border border-cream/20 p-3 flex items-center justify-between"
-                >
-                  <span className="font-mono text-sm text-cream/80">
-                    {w.war}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs text-cream/50">
-                      A:{w.weightA} / B:{w.weightB}
-                    </span>
-                    <span className="font-mono text-xs text-war-green">
-                      {w.coherent}-coherent ✓
-                    </span>
+                <li key={w.war} className="panel-inset p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-sans font-medium">{w.war}</span>
+                    <span className="hud-label">weighed</span>
                   </div>
-                </div>
+                  <div className="flex flex-wrap gap-x-8 gap-y-2">
+                    <WeightGauge label={w.sideA} weight={w.weightA} tone="p1" />
+                    <WeightGauge label={w.sideB} weight={w.weightB} tone="p2" />
+                  </div>
+                  <p className="font-mono text-[11px] text-bone/40">
+                    evidence: {w.evidence}
+                  </p>
+                  {w.hypocrisy && (
+                    <p className="font-mono text-[11px] text-gold border-t border-panel-edge pt-2">
+                      ⚠ HYPOCRISY ADVISORY — {w.hypocrisy}
+                    </p>
+                  )}
+                </li>
               ))}
+            </ul>
+
+            <div className="border border-arcane/40 bg-arcane/10 p-5 text-center space-y-2">
+              <p className="font-pixel text-sm text-arcane">YOU ARE CENSUSED</p>
+              <p className="font-sans text-sm text-bone/70">
+                The attestor signed your weights without ever learning your
+                secrets — it cannot connect your future vote to your name.
+              </p>
             </div>
 
-            <div className="border-2 border-war-gold/50 bg-war-gold/10 p-4">
-              <p className="font-stencil text-sm tracking-wider text-war-gold">
-                YOU ARE CENSUSED. YOU ARE READY.
-              </p>
-              <p className="font-mono text-xs text-cream/50 mt-1">
-                Your entries are recorded. Your anonymity is guaranteed.
-              </p>
-            </div>
-
-            <button className="btn-primary w-full" onClick={() => setStep(1)}>
-              RETURN TO WAR ROOM
-            </button>
+            <Link href="/" className="btn-primary w-full text-center">
+              Enter the War Room →
+            </Link>
           </div>
         )}
       </div>

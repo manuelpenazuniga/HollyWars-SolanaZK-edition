@@ -1,110 +1,127 @@
-@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=JetBrains+Mono:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── War Console: modern chassis, pixel signals ─────────────────────────
+   Pixel (Silkscreen) is reserved for: wordmark, scoreboard digits,
+   HUD eyebrows, and medal sprites. Everything else stays modern & quiet. */
+
 @layer base {
   body {
-    @apply bg-war-black text-cream font-mono;
-    background-image:
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(245, 240, 225, 0.03) 2px,
-        rgba(245, 240, 225, 0.03) 4px
-      );
+    @apply bg-void text-bone font-sans antialiased;
+  }
+
+  ::selection {
+    @apply bg-arcane/40 text-bone;
+  }
+
+  :focus-visible {
+    outline: 2px solid theme(colors.arcane);
+    outline-offset: 2px;
   }
 }
 
 @layer components {
-  .propaganda-title {
-    @apply font-stencil uppercase tracking-wider text-cream;
-    text-shadow: 2px 2px 0 #C41E3A, 4px 4px 0 rgba(0,0,0,0.3);
+  /* HUD eyebrow — the pixel label that tags every section */
+  .hud-label {
+    @apply font-pixel text-[10px] uppercase tracking-[0.2em] text-bone/50;
   }
 
-  .war-card {
-    @apply border-2 border-cream/20 bg-war-black/80 backdrop-blur-sm;
-    box-shadow: inset 0 0 20px rgba(196, 30, 58, 0.1), 0 0 15px rgba(0,0,0,0.5);
+  .panel {
+    @apply bg-panel border border-panel-edge;
   }
 
-  .tally-bar {
-    @apply h-8 transition-all duration-700 ease-out relative overflow-hidden;
+  .panel-inset {
+    @apply bg-void/60 border border-panel-edge;
   }
 
-  .tally-bar::after {
-    content: '';
-    @apply absolute inset-0;
-    background: repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 4px,
-      rgba(0,0,0,0.15) 4px,
-      rgba(0,0,0,0.15) 8px
-    );
-  }
-
-  .btn-propaganda {
-    @apply px-6 py-3 font-stencil uppercase tracking-wider border-2 transition-all duration-200;
-    @apply hover:scale-105 active:scale-95;
+  /* Buttons: modern, flat, decisive */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-sans font-medium text-sm
+           border transition-colors duration-150 select-none;
   }
 
   .btn-primary {
-    @apply btn-propaganda bg-war-red border-war-red text-cream;
-    @apply hover:bg-war-red-dark hover:border-war-red-dark;
-    box-shadow: 0 4px 0 #8B0000, 0 6px 10px rgba(0,0,0,0.4);
+    @apply btn bg-bone text-void border-bone hover:bg-transparent hover:text-bone;
   }
 
-  .btn-secondary {
-    @apply btn-propaganda bg-transparent border-cream/40 text-cream;
-    @apply hover:bg-cream/10 hover:border-cream/60;
+  .btn-ghost {
+    @apply btn bg-transparent text-bone/80 border-panel-edge hover:border-bone/50 hover:text-bone;
   }
 
-  .ticker-item {
-    @apply whitespace-nowrap px-6 py-2 border-r border-cream/20 text-sm;
+  .btn-arcane {
+    @apply btn bg-arcane/15 text-arcane border-arcane/40 hover:bg-arcane/25;
   }
 
-  .medal-card {
-    @apply border-2 border-cream/20 bg-war-black/60 p-4 text-center transition-all duration-300;
-    @apply hover:border-war-gold hover:shadow-lg hover:shadow-war-gold/20;
+  .input-console {
+    @apply w-full bg-void border border-panel-edge text-bone px-4 py-3 font-mono text-sm
+           focus:outline-none focus:border-arcane/70 placeholder:text-bone/25;
   }
 
-  .medal-claimed {
-    @apply opacity-40 grayscale;
+  /* Terminal panel — CRT lives ONLY inside these */
+  .crt {
+    position: relative;
+  }
+  .crt::after {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(232, 228, 216, 0.025) 3px,
+      rgba(232, 228, 216, 0.025) 4px
+    );
   }
 
-  .input-war {
-    @apply w-full bg-war-black/80 border-2 border-cream/30 text-cream px-4 py-3 font-mono;
-    @apply focus:outline-none focus:border-war-red focus:ring-1 focus:ring-war-red/50;
-    @apply placeholder:text-cream/30;
+  /* Faction chips */
+  .chip-p1 {
+    @apply bg-p1/15 text-p1 border border-p1/30;
+  }
+  .chip-p2 {
+    @apply bg-p2/15 text-p2 border border-p2/30;
   }
 
-  .terminal-text {
-    @apply font-mono text-cream/70;
+  /* Dither checkers — the contested frontier, mixed at 3 densities */
+  .dither-25 {
+    background-image: repeating-conic-gradient(theme(colors.p1) 0% 25%, theme(colors.p2) 0% 50%);
+    background-size: 4px 4px;
+  }
+  .dither-50 {
+    background-image: repeating-conic-gradient(theme(colors.p1) 0% 25%, theme(colors.p2) 0% 50%);
+    background-size: 8px 8px;
+  }
+  .dither-75 {
+    background-image: repeating-conic-gradient(theme(colors.p2) 0% 25%, theme(colors.p1) 0% 50%);
+    background-size: 4px 4px;
   }
 
-  .side-a-bg {
-    @apply bg-war-red;
+  .pixelated {
+    image-rendering: pixelated;
   }
 
-  .side-b-bg {
-    @apply bg-war-green;
+  /* Quiet, square scrollbars inside console panels */
+  .console-scroll::-webkit-scrollbar {
+    width: 6px;
   }
-
-  .frontier-line {
-    @apply absolute top-0 bottom-0 w-1 bg-cream z-10;
-    box-shadow: 0 0 8px rgba(245, 240, 225, 0.6);
+  .console-scroll::-webkit-scrollbar-track {
+    background: transparent;
   }
-
-  .stamp {
-    @apply inline-block border-4 border-war-red px-4 py-2 font-stencil uppercase tracking-widest text-war-red;
-    transform: rotate(-3deg);
+  .console-scroll::-webkit-scrollbar-thumb {
+    background: theme(colors.panel-edge);
   }
 }
 
-@layer utilities {
-  .text-glow {
-    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -5,74 +5,96 @@ import { usePathname } from "next/navigation";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 const NAV_ITEMS = [
-  { href: "/", label: "WAR ROOM" },
-  { href: "/enlist", label: "ENLIST" },
-  { href: "/medals", label: "MEDALS" },
+  { href: "/", label: "War Room" },
+  { href: "/enlist", label: "Enlist" },
+  { href: "/medals", label: "Medals" },
 ];
+
+function NavLink({
+  href,
+  label,
+  active,
+  className = "",
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`relative px-4 py-2 font-sans text-sm transition-colors ${
+        active ? "text-bone" : "text-bone/50 hover:text-bone"
+      } ${className}`}
+    >
+      {label}
+      {active && (
+        <span
+          className="absolute left-4 right-4 -bottom-px h-0.5 bg-arcane"
+          aria-hidden
+        />
+      )}
+    </Link>
+  );
+}
 
 export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b-2 border-cream/20 bg-war-black/95 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <span className="text-3xl">⚔</span>
-          <div>
-            <h1 className="font-stencil text-xl tracking-wider text-cream group-hover:text-war-red transition-colors">
-              HOLY WARS
-            </h1>
-            <p className="text-[10px] font-mono text-cream/50 tracking-widest uppercase">
-              The Eternal Scoreboard
-            </p>
-          </div>
+    <header className="sticky top-0 z-50 bg-void/95 backdrop-blur-sm border-b border-panel-edge">
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <Link href="/" className="group shrink-0">
+          <span className="font-pixel text-base md:text-lg text-bone group-hover:text-arcane transition-colors">
+            HOLY WARS
+          </span>
+          <span className="hidden lg:block hud-label mt-0.5">
+            The Eternal Scoreboard
+          </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center">
           {NAV_ITEMS.map((item) => (
-            <Link
+            <NavLink
               key={item.href}
               href={item.href}
-              className={`px-4 py-2 font-stencil text-sm tracking-wider transition-all duration-200 border-2 ${
-                pathname === item.href
-                  ? "border-war-red text-war-red bg-war-red/10"
-                  : "border-transparent text-cream/70 hover:text-cream hover:border-cream/30"
-              }`}
-            >
-              {item.label}
-            </Link>
+              label={item.label}
+              active={pathname === item.href}
+            />
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:block">
-            <WalletMultiButton
-              style={{
-                backgroundColor: "transparent",
-                border: "2px solid rgba(245, 240, 225, 0.3)",
-                color: "#F5F0E1",
-                fontFamily: '"JetBrains Mono", monospace',
-                fontSize: "12px",
-                letterSpacing: "0.05em",
-              }}
-            />
-          </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 border border-panel-edge">
+            <span className="w-1.5 h-1.5 bg-gold" aria-hidden />
+            <span className="hud-label">Devnet</span>
+          </span>
+          <WalletMultiButton
+            style={{
+              backgroundColor: "transparent",
+              border: "1px solid #1E232E",
+              borderRadius: 0,
+              color: "#E8E4D8",
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: "12px",
+              height: "36px",
+              lineHeight: "36px",
+            }}
+          />
         </div>
       </div>
 
-      <nav className="md:hidden flex border-t border-cream/10">
+      <nav className="md:hidden flex border-t border-panel-edge">
         {NAV_ITEMS.map((item) => (
-          <Link
+          <NavLink
             key={item.href}
             href={item.href}
-            className={`flex-1 text-center py-2 font-stencil text-xs tracking-wider transition-colors ${
-              pathname === item.href
-                ? "text-war-red bg-war-red/10"
-                : "text-cream/60"
-            }`}
-          >
-            {item.label}
-          </Link>
+            label={item.label}
+            active={pathname === item.href}
+            className="flex-1 text-center"
+          />
         ))}
       </nav>
     </header>

@@ -8,31 +8,45 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: "#F5F0E1",
-        "cream-dark": "#E8E0CC",
-        "war-red": "#C41E3A",
-        "war-red-dark": "#8B0000",
-        "war-black": "#1A1A1A",
-        "war-gold": "#D4A017",
-        "war-green": "#2D5016",
+        void: "#0A0C10",
+        panel: "#12151C",
+        "panel-edge": "#1E232E",
+        bone: "#E8E4D8",
+        p1: "#FF4D4F",
+        "p1-deep": "#B32224",
+        p2: "#4D9FFF",
+        "p2-deep": "#1F5FB3",
+        gold: "#F5B32F",
+        arcane: "#A78BFA",
       },
       fontFamily: {
-        stencil: ['"Black Ops One"', "system-ui", "sans-serif"],
+        pixel: ['"Silkscreen"', "monospace"],
+        sans: ['"Space Grotesk"', "system-ui", "sans-serif"],
         mono: ['"JetBrains Mono"', '"Fira Code"', "monospace"],
       },
       animation: {
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "ticker": "ticker 20s linear infinite",
-        "forge-spin": "forge-spin 1.5s linear infinite",
+        "cursor-blink": "cursor-blink 1s steps(2, jump-none) infinite",
+        "capture": "capture 0.25s steps(2, jump-none) 2",
+        "tick-up": "tick-up 0.2s steps(2) both",
+        "feed-in": "feed-in 0.25s steps(4) both",
+        "live-blink": "cursor-blink 1.6s steps(2, jump-none) infinite",
       },
       keyframes: {
-        ticker: {
-          "0%": { transform: "translateX(0)" },
-          "100%": { transform: "translateX(-50%)" },
+        "cursor-blink": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.15" },
         },
-        "forge-spin": {
-          "0%": { transform: "rotate(0deg)" },
-          "100%": { transform: "rotate(360deg)" },
+        capture: {
+          "0%": { filter: "brightness(2.5)" },
+          "100%": { filter: "brightness(1)" },
+        },
+        "tick-up": {
+          "0%": { transform: "translateY(0.18em)", opacity: "0.55" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "feed-in": {
+          "0%": { transform: "translateX(-8px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
         },
       },
     },

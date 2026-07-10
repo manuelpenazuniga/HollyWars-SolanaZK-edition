@@ -19,13 +19,15 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <WalletContextProvider>
           <Header />
-          <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
-          <footer className="border-t border-cream/10 mt-16 py-6 text-center">
-            <p className="font-mono text-xs text-cream/30 tracking-wider">
-              ⚔ HOLY WARS — SOLANA DEV CHALLENGE 2026 ⚔
+          <main className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+            {children}
+          </main>
+          <footer className="border-t border-panel-edge mt-16 py-8 text-center space-y-1.5">
+            <p className="hud-label">
+              Holy Wars — Solana Dev Challenge 2026
             </p>
-            <p className="font-mono text-[10px] text-cream/20 mt-1">
-              YOUR CODEBASE NEEDS YOU · VOTE ANONYMOUSLY · FIGHT FOREVER
+            <p className="font-mono text-[11px] text-bone/25">
+              your codebase needs you · vote anonymously · fight forever
             </p>
           </footer>
         </WalletContextProvider>

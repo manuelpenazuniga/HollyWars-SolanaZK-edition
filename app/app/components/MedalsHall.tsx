@@ -1,82 +1,86 @@
 "use client";
 
 import { MEDALS, type Medal } from "@/lib/mock";
+import { PixelMedal, type SpriteName } from "@/components/PixelMedal";
 
-const RARITY_COLORS: Record<Medal["rarity"], string> = {
-  common: "border-cream/30 text-cream/60",
-  rare: "border-blue-400/50 text-blue-400",
-  epic: "border-purple-400/50 text-purple-400",
-  legendary: "border-war-gold/50 text-war-gold",
+const MEDAL_SPRITES: Record<string, SpriteName> = {
+  "medal-tabs-veteran": "shield",
+  "medal-vim-legend": "sword",
+  "medal-dark-champion": "moon",
+  "medal-enlisted": "medal",
+  "medal-first-blood": "bolt",
+  "medal-anonymous": "ghost",
 };
 
-const RARITY_LABELS: Record<Medal["rarity"], string> = {
-  common: "COMMON",
-  rare: "RARE",
-  epic: "EPIC",
-  legendary: "LEGENDARY",
+const RARITY_TEXT: Record<Medal["rarity"], string> = {
+  common: "text-bone/50",
+  rare: "text-p2",
+  epic: "text-arcane",
+  legendary: "text-gold",
 };
 
 function MedalCard({ medal }: { medal: Medal }) {
+  const sprite = MEDAL_SPRITES[medal.id] ?? "medal";
   return (
-    <div
-      className={`medal-card ${medal.claimed ? "medal-claimed" : ""}`}
+    <li
+      className={`panel p-5 flex flex-col items-center text-center transition-colors ${
+        medal.claimed ? "border-gold/40" : "hover:border-bone/30"
+      }`}
     >
-      <div className="text-4xl mb-3">
-        {medal.rarity === "legendary" ? "🏆" : medal.rarity === "epic" ? "🎖" : medal.rarity === "rare" ? "⭐" : "🔰"}
-      </div>
-      <h3 className="font-stencil text-sm tracking-wider text-cream mb-1">
-        {medal.name.toUpperCase()}
-      </h3>
-      <p className="font-mono text-xs text-cream/50 mb-3">
+      <PixelMedal
+        sprite={sprite}
+        rarity={medal.rarity}
+        size={72}
+        className={medal.claimed ? "" : "opacity-60"}
+      />
+      <h3 className="font-sans font-bold mt-4 mb-1">{medal.name}</h3>
+      <p className="font-sans text-sm text-bone/50 mb-4 flex-1">
         {medal.description}
       </p>
-      <div className="flex items-center justify-between">
+      <div className="w-full flex items-center justify-between">
         <span
-          className={`font-mono text-[10px] tracking-widest ${RARITY_COLORS[medal.rarity]}`}
+          className={`font-pixel text-[9px] uppercase tracking-widest ${RARITY_TEXT[medal.rarity]}`}
         >
-          {RARITY_LABELS[medal.rarity]}
+          {medal.rarity}
         </span>
         {medal.claimed ? (
-          <span className="font-mono text-[10px] text-war-green">
-            ✓ CLAIMED
-          </span>
+          <span className="font-mono text-[11px] text-gold">✓ CLAIMED</span>
         ) : (
-          <button className="font-mono text-[10px] text-war-red hover:text-war-red-dark transition-colors tracking-wider">
+          <button className="font-mono text-[11px] text-bone/50 hover:text-arcane transition-colors">
             CLAIM →
           </button>
         )}
       </div>
-    </div>
+    </li>
   );
 }
 
 export function MedalsHall() {
   return (
     <div>
-      <div className="text-center space-y-3 mb-8">
-        <div className="stamp inline-block">YOUR SCARS</div>
-        <h2 className="propaganda-title text-3xl md:text-4xl">
-          HALL OF MEDALS
+      <div className="mb-8">
+        <span className="hud-label">Hall of medals</span>
+        <h2 className="font-sans font-bold text-3xl md:text-4xl tracking-tight mt-2 mb-2">
+          Scars are proof you fought
         </h2>
-        <p className="terminal-text max-w-lg mx-auto">
-          Compressed NFTs forged in the fires of battle. Each medal proves you
-          fought — not which side you chose.
+        <p className="font-sans text-sm text-bone/60 max-w-lg">
+          Compressed NFTs, one per war. A medal proves you were censused as a
+          combatant — never which side you chose, and not even whether you
+          fired a shot. That&apos;s the second nullifier at work.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {MEDALS.map((medal) => (
           <MedalCard key={medal.id} medal={medal} />
         ))}
-      </div>
+      </ul>
 
-      <div className="mt-8 border border-cream/10 p-4">
-        <p className="font-mono text-xs text-cream/40">
-          <span className="text-war-red">⚠</span> MOCK MODE — Medals shown are
-          placeholders. In production, these are cNFTs minted via the Bubblegum
-          standard on Solana, stored with state compression for minimal cost.
-        </p>
-      </div>
+      <p className="font-mono text-xs text-bone/35 panel-inset p-4 mt-6">
+        <span className="text-gold">▮</span> MOCK MODE — placeholders. In
+        production these are cNFTs minted via Bubblegum with state compression:
+        ~0.00001 SOL per medal, claimable to any wallet — even a fresh one.
+      </p>
     </div>
   );
 }

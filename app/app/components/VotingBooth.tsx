@@ -1,16 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getWarById } from "@/lib/mock";
+import { Battlefront } from "@/components/Battlefront";
 
-const FORGE_MESSAGES = [
-  "forjando tu voto en conocimiento-cero…",
-  "generando prueba Groth16…",
-  "ocultando tu identidad en el circuito…",
-  "sellando tu papeleta anónima…",
-  "enviando al relayer…",
-];
+/* The proof is the technical crown jewel — so the UI performs it.
+   Each stage is real: this is exactly what the production booth does
+   with snarkjs-wasm before handing the proof to the relayer. */
+const FORGE_STAGES = [
+  "loading census tree — depth 20, room for 1,048,576 devs",
+  "building merkle path to your secret leaf",
+  "forging groth16 proof — 12,131 constraints",
+  "proof ready — 256 bytes of pure alibi",
+  "relaying anonymously — your wallet stays home",
+  "vote landed on-chain — nullifier burned",
+] as const;
+
+function ForgeTerminal({ stage, done }: { stage: number; done: boolean }) {
+  return (
+    <div className="panel-inset crt border-arcane/40 p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <span
+          className={`w-2 h-2 bg-arcane ${done ? "" : "animate-live-blink"}`}
+          aria-hidden
+        />
+        <span className="hud-label text-arcane">ZK Forge</span>
+      </div>
+      <ol className="space-y-1.5 font-mono text-[13px]">
+        {FORGE_STAGES.slice(0, stage + 1).map((line, i) => (
+          <li key={line} className="animate-feed-in">
+            <span
+              className={
+                done || i === stage ? "text-arcane" : "text-arcane/65"
+              }
+            >
+              {done || i < stage ? "  ✓" : "  ▸"} {line}
+              {!done && i === stage && (
+                <span className="animate-cursor-blink" aria-hidden>
+                  _
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div
+        className="mt-4 flex gap-px h-2"
+        role="progressbar"
+        aria-valuenow={stage + 1}
+        aria-valuemin={0}
+        aria-valuemax={FORGE_STAGES.length}
+      >
+        {FORGE_STAGES.map((s, i) => (
+          <div
+            key={s}
+            className={`flex-1 ${i <= stage ? "bg-arcane" : "bg-panel-edge"}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function VotingBooth() {
   const params = useParams();
@@ -19,128 +71,140 @@ export function VotingBooth() {
 
   const [selectedSide, setSelectedSide] = useState<"a" | "b" | null>(null);
   const [battleCry, setBattleCry] = useState("");
-  const [isForging, setIsForging] = useState(false);
-  const [forgeMessage, setForgeMessage] = useState("");
+  const [forgeStage, setForgeStage] = useState<number | null>(null);
   const [voteComplete, setVoteComplete] = useState(false);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+    };
+  }, []);
 
   if (!war) {
     return (
-      <div className="text-center space-y-4">
-        <h2 className="propaganda-title text-3xl">WAR NOT FOUND</h2>
-        <p className="terminal-text">This battlefield does not exist.</p>
+      <div className="max-w-2xl mx-auto panel p-10 text-center space-y-3">
+        <h2 className="font-pixel text-xl text-bone">404 — NO SUCH WAR</h2>
+        <p className="font-sans text-sm text-bone/60">
+          This battlefield does not exist. Pick a real fight instead.
+        </p>
+        <Link href="/" className="btn-ghost">
+          ← Back to the War Room
+        </Link>
       </div>
     );
   }
 
+  const isForging = forgeStage !== null && !voteComplete;
+
   const handleForge = () => {
     if (!selectedSide) return;
-    setIsForging(true);
+    setForgeStage(0);
     setVoteComplete(false);
-
     let idx = 0;
-    setForgeMessage(FORGE_MESSAGES[0]);
-    const interval = setInterval(() => {
+    timer.current = setInterval(() => {
       idx++;
-      if (idx < FORGE_MESSAGES.length) {
-        setForgeMessage(FORGE_MESSAGES[idx]);
+      if (idx < FORGE_STAGES.length) {
+        setForgeStage(idx);
       } else {
-        clearInterval(interval);
-        setIsForging(false);
+        if (timer.current) clearInterval(timer.current);
         setVoteComplete(true);
       }
-    }, 1200);
+    }, 1100);
+  };
+
+  const reset = () => {
+    setSelectedSide(null);
+    setBattleCry("");
+    setForgeStage(null);
+    setVoteComplete(false);
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="text-center space-y-3 mb-8">
-        <span className="text-5xl">{war.emoji}</span>
-        <h2 className="propaganda-title text-3xl md:text-4xl">
-          {war.title.toUpperCase()}
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <Link
+          href="/"
+          className="font-mono text-xs text-bone/40 hover:text-bone transition-colors"
+        >
+          ← War Room
+        </Link>
+        <h2 className="font-sans font-bold text-3xl md:text-4xl tracking-tight mt-2 mb-5">
+          {war.title}
         </h2>
-        <p className="terminal-text">
-          Choose your side. Shout your cry. Forge your vote.
-        </p>
+        <Battlefront war={war} variant="card" />
       </div>
 
-      <div className="war-card p-8 space-y-6">
-        <div>
-          <h3 className="font-stencil text-sm tracking-widest text-cream/70 mb-4">
-            CHOOSE YOUR BANNER
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
+      <div className="panel p-6 md:p-8 space-y-6">
+        <fieldset disabled={isForging || voteComplete}>
+          <legend className="hud-label mb-4">Choose your banner</legend>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-3">
             <button
               onClick={() => setSelectedSide("a")}
-              className={`border-2 p-6 text-center transition-all duration-200 ${
+              aria-pressed={selectedSide === "a"}
+              className={`p-5 md:p-6 border text-center transition-colors ${
                 selectedSide === "a"
-                  ? "border-war-red bg-war-red/20 scale-105"
-                  : "border-cream/20 hover:border-cream/40"
+                  ? "border-p1 bg-p1/10"
+                  : "border-panel-edge hover:border-p1/50"
               }`}
             >
-              <span className="font-stencil text-xl tracking-wider text-cream">
+              <span className="hud-label text-p1 block mb-1.5">P1</span>
+              <span className="font-sans font-bold text-lg md:text-xl">
                 {war.sideA}
               </span>
-              {selectedSide === "a" && (
-                <p className="text-war-red text-xs mt-2 font-mono">
-                  ✓ SELECTED
-                </p>
-              )}
             </button>
+            <span className="font-pixel text-bone/25 text-sm self-center">
+              VS
+            </span>
             <button
               onClick={() => setSelectedSide("b")}
-              className={`border-2 p-6 text-center transition-all duration-200 ${
+              aria-pressed={selectedSide === "b"}
+              className={`p-5 md:p-6 border text-center transition-colors ${
                 selectedSide === "b"
-                  ? "border-war-green bg-war-green/20 scale-105"
-                  : "border-cream/20 hover:border-cream/40"
+                  ? "border-p2 bg-p2/10"
+                  : "border-panel-edge hover:border-p2/50"
               }`}
             >
-              <span className="font-stencil text-xl tracking-wider text-cream">
+              <span className="hud-label text-p2 block mb-1.5">P2</span>
+              <span className="font-sans font-bold text-lg md:text-xl">
                 {war.sideB}
               </span>
-              {selectedSide === "b" && (
-                <p className="text-war-green text-xs mt-2 font-mono">
-                  ✓ SELECTED
-                </p>
-              )}
             </button>
           </div>
-        </div>
+        </fieldset>
 
         <div>
-          <h3 className="font-stencil text-sm tracking-widest text-cream/70 mb-2">
-            BATTLE CRY (≤140 chars)
-          </h3>
+          <label htmlFor="battle-cry" className="hud-label block mb-2">
+            Battle cry — optional, anonymous
+          </label>
           <textarea
+            id="battle-cry"
             value={battleCry}
             onChange={(e) => setBattleCry(e.target.value.slice(0, 140))}
-            placeholder="SHOUT INTO THE VOID..."
-            rows={3}
-            className="input-war resize-none"
-            disabled={isForging}
+            placeholder="Shout into the void…"
+            rows={2}
+            className="input-console resize-none"
+            disabled={isForging || voteComplete}
           />
-          <p className="font-mono text-xs text-cream/40 mt-1 text-right">
-            {battleCry.length}/140
+          <p className="font-mono text-[11px] text-bone/30 mt-1 text-right">
+            {battleCry.length}/140 bytes
           </p>
         </div>
 
-        {voteComplete && (
-          <div className="border-2 border-war-gold/50 bg-war-gold/10 p-4 text-center">
-            <p className="font-stencil text-sm tracking-wider text-war-gold">
-              ⚔ YOUR VOTE HAS BEEN FORGED ⚔
-            </p>
-            <p className="font-mono text-xs text-cream/50 mt-1">
-              Anonymous. Immutable. Eternal.
-            </p>
-          </div>
+        {forgeStage !== null && (
+          <ForgeTerminal
+            stage={voteComplete ? FORGE_STAGES.length - 1 : forgeStage}
+            done={voteComplete}
+          />
         )}
 
-        {isForging && (
-          <div className="border-2 border-war-red/50 bg-war-red/10 p-6 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 border-4 border-war-red/30 border-t-war-red rounded-full animate-forge-spin" />
-            </div>
-            <p className="font-mono text-sm text-war-red animate-pulse">
-              {forgeMessage}
+        {voteComplete && (
+          <div className="border border-gold/40 bg-gold/10 p-5 text-center space-y-2">
+            <p className="font-pixel text-sm text-gold">VOTE FORGED</p>
+            <p className="font-sans text-sm text-bone/70">
+              Anonymous. Weighted. Eternal. Your nullifier is burned — voting
+              twice is no longer against the rules, it&apos;s against
+              mathematics.
             </p>
           </div>
         )}
@@ -149,35 +213,30 @@ export function VotingBooth() {
           <button
             onClick={handleForge}
             disabled={!selectedSide}
-            className={`btn-primary w-full ${
-              !selectedSide ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className="btn-arcane w-full disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            ⚔ FORGE VOTE ⚔
+            Forge zero-knowledge vote
           </button>
         )}
 
         {voteComplete && (
-          <button
-            onClick={() => {
-              setSelectedSide(null);
-              setBattleCry("");
-              setVoteComplete(false);
-            }}
-            className="btn-secondary w-full"
-          >
-            CAST ANOTHER VOTE
-          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={reset} className="btn-ghost">
+              Reset demo
+            </button>
+            <Link href="/medals" className="btn-primary text-center">
+              Claim your medal →
+            </Link>
+          </div>
         )}
       </div>
 
-      <div className="mt-6 border border-cream/10 p-4">
-        <p className="font-mono text-xs text-cream/40">
-          <span className="text-war-red">⚠</span> MOCK MODE — No real proof is
-          being generated. In production, this button triggers a Groth16 proof
-          via snarkjs, submitted through a relayer to protect your anonymity.
-        </p>
-      </div>
+      <p className="font-mono text-xs text-bone/35 panel-inset p-4">
+        <span className="text-gold">▮</span> MOCK MODE — no real proof is
+        forged here yet. In production this button runs snarkjs-wasm in your
+        browser and hands the proof to a relayer, so your wallet never touches
+        the ballot box.
+      </p>
     </div>
   );
 }

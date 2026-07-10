@@ -1,114 +1,97 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { WARS, BATTLE_CRIES, simulateTallyUpdate, type War, type BattleCry } from "@/lib/mock";
+import { Battlefront, LivePixel } from "@/components/Battlefront";
 
-function TallyBar({ war }: { war: War }) {
-  const total = war.tallyA + war.tallyB;
-  const pctA = total > 0 ? (war.tallyA / total) * 100 : 50;
-  const pctB = 100 - pctA;
+function warNumber(war: War): string {
+  return String(WARS.findIndex((w) => w.id === war.id) + 1).padStart(3, "0");
+}
 
+/* The flagship war IS the hero. The page opens on a live scoreboard,
+   not on a slogan. */
+function FlagshipWar({ war }: { war: War }) {
   return (
-    <div className="relative w-full h-8 rounded-sm overflow-hidden bg-war-black border border-cream/20">
-      <div
-        className="tally-bar side-a-bg absolute left-0 top-0 bottom-0"
-        style={{ width: `${pctA}%` }}
-      />
-      <div
-        className="tally-bar side-b-bg absolute right-0 top-0 bottom-0"
-        style={{ width: `${pctB}%` }}
-      />
-      <div
-        className="frontier-line"
-        style={{ left: `${pctA}%` }}
-      />
-      <div className="absolute inset-0 flex items-center justify-between px-3 z-20">
-        <span className="font-mono text-xs font-bold text-cream drop-shadow-lg">
-          {war.sideA} {war.tallyA}
-        </span>
-        <span className="font-mono text-xs font-bold text-cream drop-shadow-lg">
-          {war.tallyB} {war.sideB}
+    <section className="panel p-6 md:p-10">
+      <div className="flex items-center justify-between mb-6 md:mb-8">
+        <div className="flex items-center gap-4">
+          <span className="hud-label">War Nº {warNumber(war)}</span>
+          <LivePixel />
+        </div>
+        <span className="font-mono text-xs text-bone/40">
+          {(war.tallyA + war.tallyB).toLocaleString("en-US")} votes · anonymous
+          · weighted
         </span>
       </div>
-    </div>
+
+      <h2 className="font-sans font-bold text-3xl md:text-5xl tracking-tight mb-6 md:mb-8">
+        {war.title}
+      </h2>
+
+      <Battlefront war={war} variant="hero" />
+
+      <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+        <p className="font-sans text-sm text-bone/60 max-w-md">
+          Every ballot is a zero-knowledge proof, weighted by the voter&apos;s
+          own commit history. Nobody — not even us — knows who pushed the line.
+        </p>
+        <Link href={`/war/${war.id}`} className="btn-primary shrink-0">
+          Cast your vote →
+        </Link>
+      </div>
+    </section>
   );
 }
 
 function WarCard({ war }: { war: War }) {
   return (
     <Link href={`/war/${war.id}`} className="block group">
-      <div className="war-card p-6 transition-all duration-300 hover:border-war-red/60 hover:shadow-lg hover:shadow-war-red/10">
+      <div className="panel p-5 transition-colors duration-150 group-hover:border-bone/30 h-full">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{war.emoji}</span>
-            <div>
-              <h3 className="font-stencil text-lg tracking-wider text-cream group-hover:text-war-red transition-colors">
-                {war.title.toUpperCase()}
-              </h3>
-              <span className="font-mono text-[10px] text-war-red tracking-widest uppercase">
-                ● ACTIVE — VOTING OPEN
-              </span>
-            </div>
-          </div>
-          <span className="font-mono text-xs text-cream/40">
-            {war.tallyA + war.tallyB} votes
-          </span>
+          <span className="hud-label">War Nº {warNumber(war)}</span>
+          <LivePixel />
         </div>
-
-        <TallyBar war={war} />
-
-        <div className="flex items-center justify-between mt-3">
-          <span className="font-mono text-xs text-cream/50">
-            {((war.tallyA / (war.tallyA + war.tallyB)) * 100).toFixed(1)}%
-          </span>
-          <span className="font-mono text-xs text-cream/50">
-            {((war.tallyB / (war.tallyA + war.tallyB)) * 100).toFixed(1)}%
-          </span>
-        </div>
-
-        <div className="mt-4 text-center">
-          <span className="font-stencil text-xs tracking-wider text-cream/40 group-hover:text-war-red transition-colors">
-            ENTER THE TRENCHES →
-          </span>
+        <h3 className="font-sans font-bold text-xl tracking-tight mb-4 group-hover:text-arcane transition-colors">
+          {war.title}
+        </h3>
+        <Battlefront war={war} variant="card" />
+        <div className="mt-4 font-mono text-xs text-bone/40 group-hover:text-bone/70 transition-colors">
+          Enter the war →
         </div>
       </div>
     </Link>
   );
 }
 
-function BattleCryTicker({ cries }: { cries: BattleCry[] }) {
+function FieldComms({ cries }: { cries: BattleCry[] }) {
   return (
-    <div className="border-2 border-cream/20 bg-war-black/80 overflow-hidden">
-      <div className="border-b border-cream/20 px-4 py-2 flex items-center gap-2">
-        <span className="text-war-red text-glow">●</span>
-        <span className="font-stencil text-xs tracking-widest text-cream/70">
-          BATTLE CRIES — LIVE FEED
+    <section className="panel crt overflow-hidden">
+      <div className="border-b border-panel-edge px-4 py-2.5 flex items-center justify-between">
+        <LivePixel label="FIELD COMMS" />
+        <span className="font-mono text-[11px] text-bone/30">
+          anonymous battle cries · 140 bytes max
         </span>
       </div>
-      <div className="overflow-hidden relative h-40">
-        <div className="absolute inset-0 flex flex-col gap-1 p-3 overflow-y-auto">
-          {cries.map((cry) => (
-            <div
-              key={cry.id}
-              className="flex items-start gap-2 text-sm font-mono animate-pulse-slow"
+      <ul className="p-4 space-y-2 h-44 overflow-y-auto console-scroll">
+        {cries.map((cry) => (
+          <li
+            key={cry.id}
+            className="flex items-baseline gap-2.5 font-mono text-[13px] animate-feed-in"
+          >
+            <span
+              className={`shrink-0 px-1.5 font-pixel text-[9px] leading-4 ${
+                cry.side === "a" ? "chip-p1" : "chip-p2"
+              }`}
             >
-              <span
-                className={`shrink-0 px-1.5 py-0.5 text-[10px] font-bold ${
-                  cry.side === "a"
-                    ? "bg-war-red/20 text-war-red"
-                    : "bg-war-green/20 text-war-green"
-                }`}
-              >
-                {cry.side === "a" ? "A" : "B"}
-              </span>
-              <span className="text-cream/50 shrink-0">{cry.author}:</span>
-              <span className="text-cream/80">{cry.text}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+              {cry.side === "a" ? "P1" : "P2"}
+            </span>
+            <span className="text-bone/35 shrink-0">{cry.author}</span>
+            <span className="text-bone/80">{cry.text}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -130,7 +113,8 @@ export function WarRoom() {
           id: `cry-${Date.now()}`,
           warId: wars[Math.floor(Math.random() * wars.length)].id,
           author: `anon_${Math.random().toString(36).slice(2, 8)}`,
-          text: BATTLE_CRIES[Math.floor(Math.random() * BATTLE_CRIES.length)].text,
+          text: BATTLE_CRIES[Math.floor(Math.random() * BATTLE_CRIES.length)]
+            .text,
           side: Math.random() > 0.5 ? "a" : "b",
           timestamp: Date.now(),
         };
@@ -140,26 +124,19 @@ export function WarRoom() {
     return () => clearInterval(interval);
   }, [wars]);
 
-  return (
-    <div className="space-y-8">
-      <div className="text-center space-y-3">
-        <div className="stamp inline-block mb-2">YOUR CODEBASE NEEDS YOU</div>
-        <h2 className="propaganda-title text-3xl md:text-5xl">
-          THE WAR ROOM
-        </h2>
-        <p className="terminal-text max-w-xl mx-auto">
-          Three wars rage eternal. The scoreboard never forgets.
-          Choose your side. Cast your vote. Claim your scar.
-        </p>
-      </div>
+  const [flagship, ...rest] = wars;
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {wars.map((war) => (
+  return (
+    <div className="space-y-6">
+      <FlagshipWar war={flagship} />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {rest.map((war) => (
           <WarCard key={war.id} war={war} />
         ))}
       </div>
 
-      <BattleCryTicker cries={cries} />
+      <FieldComms cries={cries} />
     </div>
   );
 }
