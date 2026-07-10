@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+
+/* Mock enlistment flag. In production this isn't app state — it's whether
+   you hold the secrets (seed/trapdoor) of a leaf in the census tree. */
+export const ENLISTED_KEY = "holywars_enlisted";
 
 const MOCK_GITHUB = {
   username: "dev_soldier_42",
@@ -119,6 +123,10 @@ export function EnlistWizard() {
   const [githubConnected, setGithubConnected] = useState(false);
 
   const advance = () => setStep((s) => Math.min(s + 1, 3));
+
+  useEffect(() => {
+    if (step === 3) localStorage.setItem(ENLISTED_KEY, "1");
+  }, [step]);
 
   return (
     <div className="max-w-2xl mx-auto">

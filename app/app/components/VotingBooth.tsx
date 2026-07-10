@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getWarById } from "@/lib/mock";
 import { Battlefront } from "@/components/Battlefront";
+import { ENLISTED_KEY } from "@/components/EnlistWizard";
 
 /* The proof is the technical crown jewel — so the UI performs it.
    Each stage is real: this is exactly what the production booth does
@@ -73,9 +74,11 @@ export function VotingBooth() {
   const [battleCry, setBattleCry] = useState("");
   const [forgeStage, setForgeStage] = useState<number | null>(null);
   const [voteComplete, setVoteComplete] = useState(false);
+  const [enlisted, setEnlisted] = useState<boolean | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    setEnlisted(localStorage.getItem(ENLISTED_KEY) === "1");
     return () => {
       if (timer.current) clearInterval(timer.current);
     };
@@ -98,7 +101,7 @@ export function VotingBooth() {
   const isForging = forgeStage !== null && !voteComplete;
 
   const handleForge = () => {
-    if (!selectedSide) return;
+    if (!selectedSide || !enlisted) return;
     setForgeStage(0);
     setVoteComplete(false);
     let idx = 0;
@@ -135,8 +138,34 @@ export function VotingBooth() {
         <Battlefront war={war} variant="card" />
       </div>
 
-      <div className="panel p-6 md:p-8 space-y-6">
-        <fieldset disabled={isForging || voteComplete}>
+      {enlisted === false && (
+        <div className="panel border-gold/40 p-6 md:p-8 space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-gold animate-live-blink" aria-hidden />
+            <span className="hud-label text-gold">Census check</span>
+          </div>
+          <p className="font-pixel text-sm text-bone">
+            THE CENSUS DOESN&apos;T KNOW YOU
+          </p>
+          <p className="font-sans text-sm text-bone/70 max-w-lg">
+            Voting here isn&apos;t gated by a login — it&apos;s gated by
+            mathematics. The zero-knowledge proof needs the Merkle path to
+            <em> your</em> leaf in the census tree. No enlistment, no leaf; no
+            leaf, no proof; no proof, no vote.
+          </p>
+          <Link href="/enlist" className="btn-primary">
+            Enlist first →
+          </Link>
+        </div>
+      )}
+
+      <div
+        className={`panel p-6 md:p-8 space-y-6 ${
+          enlisted ? "" : "opacity-40 pointer-events-none select-none"
+        }`}
+        aria-disabled={!enlisted}
+      >
+        <fieldset disabled={!enlisted || isForging || voteComplete}>
           <legend className="hud-label mb-4">Choose your banner</legend>
           <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-3">
             <button
@@ -184,7 +213,7 @@ export function VotingBooth() {
             placeholder="Shout into the void…"
             rows={2}
             className="input-console resize-none"
-            disabled={isForging || voteComplete}
+            disabled={!enlisted || isForging || voteComplete}
           />
           <p className="font-mono text-[11px] text-bone/30 mt-1 text-right">
             {battleCry.length}/140 bytes
@@ -212,7 +241,7 @@ export function VotingBooth() {
         {!isForging && !voteComplete && (
           <button
             onClick={handleForge}
-            disabled={!selectedSide}
+            disabled={!selectedSide || !enlisted}
             className="btn-arcane w-full disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Forge zero-knowledge vote

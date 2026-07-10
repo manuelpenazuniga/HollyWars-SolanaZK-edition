@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { ENLISTED_KEY } from "@/components/EnlistWizard";
 
 const NAV_ITEMS = [
   { href: "/", label: "War Room" },
@@ -42,6 +44,12 @@ function NavLink({
 
 export function Header() {
   const pathname = usePathname();
+  const [enlisted, setEnlisted] = useState(false);
+
+  // Re-check on every route change so the chip appears right after enlisting.
+  useEffect(() => {
+    setEnlisted(localStorage.getItem(ENLISTED_KEY) === "1");
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 bg-void/95 backdrop-blur-sm border-b border-panel-edge">
@@ -67,6 +75,12 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3 shrink-0">
+          {enlisted && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 border border-arcane/40 bg-arcane/10">
+              <span className="w-1.5 h-1.5 bg-arcane" aria-hidden />
+              <span className="hud-label text-arcane">Censused</span>
+            </span>
+          )}
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 border border-panel-edge">
             <span className="w-1.5 h-1.5 bg-gold" aria-hidden />
             <span className="hud-label">Devnet</span>
