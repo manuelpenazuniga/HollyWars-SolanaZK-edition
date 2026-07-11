@@ -3,9 +3,24 @@
   "programId": "FHj8baQvc17Qny8TvndTtkjh2iqKgu9ucQgynwD6J1WG",
   "deployTx": "2UyKaczKrSzcHjfnog6qcAr9B3wX73VYegQi7JBMkaLxKxGpKxcmDoz2Dpt5UMeLnuo4iqTmywyn7X8hakqWntN7",
   "wars": {
-    "1": { "topic": "Tabs vs Spaces", "pda": "BdNwMpyML8maKjuaHcZy2qAuh5qR6f8jnv9Ew4Pzp3c6" },
-    "2": { "topic": "Vim vs Emacs", "pda": "GgTzzSoBoEquH1sX4eV5RgtYQXwPj4WpYrdYf1taA5L2" },
-    "3": { "topic": "Dark vs Light mode", "pda": "93pTNKdXGHsJvMABFo3n2Xr9bYsYo7uKNdup4xzq7UBC" }
+    "1": {
+      "topic": "Tabs vs Spaces",
+      "pda": "BdNwMpyML8maKjuaHcZy2qAuh5qR6f8jnv9Ew4Pzp3c6"
+    },
+    "2": {
+      "topic": "Vim vs Emacs",
+      "pda": "GgTzzSoBoEquH1sX4eV5RgtYQXwPj4WpYrdYf1taA5L2"
+    },
+    "3": {
+      "topic": "Dark vs Light mode",
+      "pda": "93pTNKdXGHsJvMABFo3n2Xr9bYsYo7uKNdup4xzq7UBC"
+    }
   },
-  "note": "Config.attestor_pubkey currently = authority (HNFrd6...); real attestor is .keys/attestor.json (4Du6x55...). Set correctly for T7."
+  "note": "Config.attestor_pubkey = authority; vkey re-deployed for T7e (setup zkey was regenerated).",
+  "e2e": {
+    "registerTx": "TLbrmPTssJpS6gSwGENNKPnN6JJh5vxVUCSxgGbjL6if5J57sUUw2BcJb9qq3CXpFnZY4rhcWiRmV4hNnZsvaUa",
+    "postRootTx": "2Wn7QYCFtJmc7xQtqvW9Q5kuHPWJadSqZ75ioGchpfxGRHDMXmhGHJKzAMBHX5Ax28D6bcS8e4UFsVKNtprBLvmZ",
+    "voteTx": "23FiuFiXymcNwGm43yNqh7uRNEfSm6UYYQiJiDaAUCUDXNfr3at1tc5KrsLQpqNwF78NFygBHJcHNZzW5UWxbxMi",
+    "note": "full census→register→Groth16 vote verified on-chain (SPEC §10)"
+  }
 }
