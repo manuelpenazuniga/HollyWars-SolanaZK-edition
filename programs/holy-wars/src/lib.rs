@@ -4,6 +4,7 @@ pub mod state;
 pub mod errors;
 pub mod instructions;
 pub mod vote_verifying_key;
+pub mod medal_verifying_key;
 
 use crate::state::*;
 use crate::errors::ErrorCode;
@@ -157,6 +158,43 @@ pub struct Vote<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// leaf_owner (the medal recipient) is deliberately NOT a circuit public input: the
+// veteran picks any wallet, keeping the medal unlinkable to their vote. It seeds
+// `medal_record`, so it is listed here in order. medal_nullifier is seeded from the
+// verified medal nullifier (anti-double-claim).
+#[derive(Accounts)]
+#[instruction(war_id: u64, medal_nullifier_hash: [u8; 32], leaf_owner: Pubkey)]
+pub struct ClaimMedal<'info> {
+    #[account(mut)]
+    pub claimer: Signer<'info>,
+
+    #[account(
+        seeds = [b"war", war_id.to_le_bytes().as_ref()],
+        bump = war.bump,
+    )]
+    pub war: Account<'info, War>,
+
+    #[account(
+        init,
+        payer = claimer,
+        space = MedalNullifier::SPACE,
+        seeds = [b"medal", war_id.to_le_bytes().as_ref(), medal_nullifier_hash.as_ref()],
+        bump
+    )]
+    pub medal_nullifier: Account<'info, MedalNullifier>,
+
+    #[account(
+        init,
+        payer = claimer,
+        space = MedalRecord::SPACE,
+        seeds = [b"medal_record", war_id.to_le_bytes().as_ref(), leaf_owner.as_ref()],
+        bump
+    )]
+    pub medal_record: Account<'info, MedalRecord>,
+
+    pub system_program: Program<'info, System>,
+}
+
 // ── program entrypoint ──
 
 #[program]
@@ -211,6 +249,21 @@ pub mod holy_wars {
     ) -> Result<()> {
         instructions::vote::handler(
             ctx, war_id, nullifier_hash, proof_a, proof_b, proof_c, public_inputs, battle_cry,
+        )
+    }
+
+    pub fn claim_medal(
+        ctx: Context<ClaimMedal>,
+        war_id: u64,
+        medal_nullifier_hash: [u8; 32],
+        leaf_owner: Pubkey,
+        proof_a: [u8; 64],
+        proof_b: [u8; 128],
+        proof_c: [u8; 64],
+        public_inputs: [[u8; 32]; 3],
+    ) -> Result<()> {
+        instructions::claim_medal::handler(
+            ctx, war_id, medal_nullifier_hash, leaf_owner, proof_a, proof_b, proof_c, public_inputs,
         )
     }
 }
