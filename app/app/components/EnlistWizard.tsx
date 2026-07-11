@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ATTESTOR_URL } from "@/lib/config";
 
-/* Mock enlistment flag. In production this isn't app state — it's whether
-   you hold the secrets (seed/trapdoor) of a leaf in the census tree. */
 export const ENLISTED_KEY = "holywars_enlisted";
 
 const MOCK_GITHUB = {
@@ -14,9 +13,6 @@ const MOCK_GITHUB = {
   repos: 23,
 };
 
-/* The Proof of Passion reveal — the attestor has read your repos and
-   weighed your soul. Weights are per side (you might vote either way),
-   coarse on purpose: a fine-grained weight is a fingerprint. */
 const MOCK_WEIGHTS = [
   {
     war: "Tabs vs Spaces",
@@ -121,8 +117,27 @@ export function EnlistWizard() {
   const [step, setStep] = useState(1);
   const [walletConnected, setWalletConnected] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const hasAttestor = !!ATTESTOR_URL;
 
-  const advance = () => setStep((s) => Math.min(s + 1, 3));
+  const advance = async () => {
+    if (step === 2 && hasAttestor) {
+      try {
+        const res = await fetch(`${ATTESTOR_URL}/enroll`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ github: MOCK_GITHUB.username }),
+        });
+        if (!res.ok) throw new Error(`attestor: ${res.status}`);
+      } catch (err) {
+        setEnrollError(
+          err instanceof Error ? err.message : "attestor unreachable",
+        );
+        return;
+      }
+    }
+    setStep((s) => Math.min(s + 1, 3));
+  };
 
   useEffect(() => {
     if (step === 3) localStorage.setItem(ENLISTED_KEY, "1");
@@ -140,6 +155,11 @@ export function EnlistWizard() {
           in; your commit history sets your weight; your secrets never leave
           this browser.
         </p>
+        {!hasAttestor && (
+          <p className="font-mono text-xs text-gold mt-3">
+            ▮ DEMO MODE — NEXT_PUBLIC_ATTESTOR_URL not set
+          </p>
+        )}
       </div>
 
       <StepIndicator current={step} />
@@ -201,6 +221,9 @@ export function EnlistWizard() {
                     {MOCK_GITHUB.repos}
                   </p>
                 </div>
+                {enrollError && (
+                  <p className="font-mono text-xs text-p1">{enrollError}</p>
+                )}
                 <button onClick={advance} className="btn-arcane w-full">
                   Measure my passion →
                 </button>

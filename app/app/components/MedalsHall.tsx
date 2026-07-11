@@ -46,9 +46,9 @@ function MedalCard({ medal }: { medal: Medal }) {
         {medal.claimed ? (
           <span className="font-mono text-[11px] text-gold">✓ CLAIMED</span>
         ) : (
-          <button className="font-mono text-[11px] text-bone/50 hover:text-arcane transition-colors">
-            CLAIM →
-          </button>
+          <span className="font-mono text-[11px] text-bone/30">
+            PRÓXIMAMENTE
+          </span>
         )}
       </div>
     </li>
@@ -77,9 +77,9 @@ export function MedalsHall() {
       </ul>
 
       <p className="font-mono text-xs text-bone/35 panel-inset p-4 mt-6">
-        <span className="text-gold">▮</span> MOCK MODE — placeholders. In
-        production these are cNFTs minted via Bubblegum with state compression:
-        ~0.00001 SOL per medal, claimable to any wallet — even a fresh one.
+        <span className="text-gold">▮</span> PRÓXIMAMENTE — cNFT minting via
+        Bubblegum with state compression is not yet wired. These placeholders
+        will become claimable on-chain medals (~0.00001 SOL each).
       </p>
     </div>
   );

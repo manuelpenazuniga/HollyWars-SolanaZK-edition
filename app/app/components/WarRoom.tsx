@@ -1,22 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { WARS, BATTLE_CRIES, simulateTallyUpdate, type War, type BattleCry } from "@/lib/mock";
+import { useLiveWars } from "@/hooks/useLiveWars";
+import { WARS, BATTLE_CRIES, type War, type BattleCry } from "@/lib/mock";
 import { Battlefront, LivePixel } from "@/components/Battlefront";
 
-function warNumber(war: War): string {
-  return String(WARS.findIndex((w) => w.id === war.id) + 1).padStart(3, "0");
+function warNumber(war: War, allWars: War[]): string {
+  return String(allWars.findIndex((w) => w.id === war.id) + 1).padStart(3, "0");
 }
 
-/* The flagship war IS the hero. The page opens on a live scoreboard,
-   not on a slogan. */
-function FlagshipWar({ war }: { war: War }) {
+function OfflineBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-gold/40 bg-gold/10">
+      <span className="w-1.5 h-1.5 bg-gold" aria-hidden />
+      <span className="hud-label text-gold">OFFLINE</span>
+    </span>
+  );
+}
+
+function FlagshipWar({
+  war,
+  allWars,
+}: {
+  war: War;
+  allWars: War[];
+}) {
   return (
     <section className="panel p-6 md:p-10">
       <div className="flex items-center justify-between mb-6 md:mb-8">
         <div className="flex items-center gap-4">
-          <span className="hud-label">War Nº {warNumber(war)}</span>
+          <span className="hud-label">
+            War Nº {warNumber(war, allWars)}
+          </span>
           <LivePixel />
         </div>
         <span className="font-mono text-xs text-bone/40">
@@ -44,12 +59,20 @@ function FlagshipWar({ war }: { war: War }) {
   );
 }
 
-function WarCard({ war }: { war: War }) {
+function WarCard({
+  war,
+  allWars,
+}: {
+  war: War;
+  allWars: War[];
+}) {
   return (
     <Link href={`/war/${war.id}`} className="block group">
       <div className="panel p-5 transition-colors duration-150 group-hover:border-bone/30 h-full">
         <div className="flex items-center justify-between mb-4">
-          <span className="hud-label">War Nº {warNumber(war)}</span>
+          <span className="hud-label">
+            War Nº {warNumber(war, allWars)}
+          </span>
           <LivePixel />
         </div>
         <h3 className="font-sans font-bold text-xl tracking-tight mb-4 group-hover:text-arcane transition-colors">
@@ -96,47 +119,27 @@ function FieldComms({ cries }: { cries: BattleCry[] }) {
 }
 
 export function WarRoom() {
-  const [wars, setWars] = useState<War[]>(WARS);
-  const [cries, setCries] = useState<BattleCry[]>(BATTLE_CRIES);
+  const { wars, healthy, cries } = useLiveWars();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWars((prev) => prev.map(simulateTallyUpdate));
-    }, 1500);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCries((prev) => {
-        const newCry: BattleCry = {
-          id: `cry-${Date.now()}`,
-          warId: wars[Math.floor(Math.random() * wars.length)].id,
-          author: `anon_${Math.random().toString(36).slice(2, 8)}`,
-          text: BATTLE_CRIES[Math.floor(Math.random() * BATTLE_CRIES.length)]
-            .text,
-          side: Math.random() > 0.5 ? "a" : "b",
-          timestamp: Date.now(),
-        };
-        return [newCry, ...prev.slice(0, 9)];
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [wars]);
-
-  const [flagship, ...rest] = wars;
+  const displayWars = wars.length > 0 ? wars : WARS;
+  const displayCries = cries.length > 0 ? cries : BATTLE_CRIES;
+  const [flagship, ...rest] = displayWars;
 
   return (
     <div className="space-y-6">
-      <FlagshipWar war={flagship} />
+      <div className="flex items-center gap-3">
+        {!healthy && <OfflineBadge />}
+      </div>
+
+      <FlagshipWar war={flagship} allWars={displayWars} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {rest.map((war) => (
-          <WarCard key={war.id} war={war} />
+          <WarCard key={war.id} war={war} allWars={displayWars} />
         ))}
       </div>
 
-      <FieldComms cries={cries} />
+      <FieldComms cries={displayCries} />
     </div>
   );
 }

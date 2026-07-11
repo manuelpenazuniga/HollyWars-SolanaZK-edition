@@ -22,5 +22,8 @@
     "postRootTx": "2Wn7QYCFtJmc7xQtqvW9Q5kuHPWJadSqZ75ioGchpfxGRHDMXmhGHJKzAMBHX5Ax28D6bcS8e4UFsVKNtprBLvmZ",
     "voteTx": "23FiuFiXymcNwGm43yNqh7uRNEfSm6UYYQiJiDaAUCUDXNfr3at1tc5KrsLQpqNwF78NFygBHJcHNZzW5UWxbxMi",
     "note": "full census→register→Groth16 vote verified on-chain (SPEC §10)"
-  }
+  },
+  "medalUpgradeSig": "4M2ze7uiTGJcTSqArhScC8qn8XdkvYz6JYukYZKWoec9Sv8zX4wTLxdN3E73DKQDN1wi2A22hgmaAj57cmXctw5S",
+  "vercelProd": "https://app-nkkdnal35-manuels-projects-3c33d348.vercel.app",
+  "medalClaimSig": "3PSFqDEzj194iKBKcHWU7u1MdiiTDxtqVXWfT4Dzn7SMz6BH8osw15PuM7EVL4hX6iLC452Up48kFagVEinCB6mu"
 }
