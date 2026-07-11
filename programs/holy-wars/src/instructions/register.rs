@@ -91,6 +91,7 @@ pub fn handler(
     );
 
     let entry = &mut ctx.accounts.census_entry;
+    entry.war_id = war_id;
     entry.commitment = commitment;
     entry.leaf_index = leaf_index;
     entry.slot = clock.slot;

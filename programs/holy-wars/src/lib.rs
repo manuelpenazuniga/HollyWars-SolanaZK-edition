@@ -14,7 +14,7 @@ use crate::errors::ErrorCode;
 // a bogus ~1MB allocation caused by a malformed `#[instruction(...)]` list on `Vote`
 // (see below). Once that was fixed, the default heap is sufficient.
 
-declare_id!("r4VBoNgAYkzK86dGoLAHN7ZZQVjKua2sgKNDxWM9Hxe");
+declare_id!("FHj8baQvc17Qny8TvndTtkjh2iqKgu9ucQgynwD6J1WG");
 
 // ── account validation structs ──
 

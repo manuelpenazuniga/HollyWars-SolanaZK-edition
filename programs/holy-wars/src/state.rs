@@ -39,6 +39,7 @@ impl War {
 
 #[account]
 pub struct CensusEntry {
+    pub war_id: u64,
     pub commitment: [u8; 32],
     pub leaf_index: u64,
     pub slot: u64,
@@ -46,7 +47,7 @@ pub struct CensusEntry {
 }
 
 impl CensusEntry {
-    pub const SPACE: usize = 8 + 32 + 8 + 8 + 1;
+    pub const SPACE: usize = 8 + 8 + 32 + 8 + 8 + 1;
 }
 
 #[account]

@@ -8,3 +8,8 @@ build/
 .next/
 dist/
 .env*
+
+# credenciales locales (NUNCA commitear)
+.keys/
+.env
+.env.*

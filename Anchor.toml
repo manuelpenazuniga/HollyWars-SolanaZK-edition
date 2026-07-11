@@ -6,11 +6,11 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-holy_wars = "EZeoVRJSZbwBPTiVyHKgafj9bWd8GfsKP8oZymCuj7eu"
+holy_wars = "FHj8baQvc17Qny8TvndTtkjh2iqKgu9ucQgynwD6J1WG"
 
 [programs.localnet]
-holy_wars = "r4VBoNgAYkzK86dGoLAHN7ZZQVjKua2sgKNDxWM9Hxe"
-verifier_spike = "AwLH4verEbF86tSBtFSbpCKVzTAGsRL2c8M3ZPSXdMYa"
+holy_wars = "FHj8baQvc17Qny8TvndTtkjh2iqKgu9ucQgynwD6J1WG"
+verifier_spike = "FTRE4a6SSMs1Y7NdLPKRnFAfGv5QhZKaW7aQPBzPT3m"
 
 [registry]
 url = "https://api.apr.dev"
@@ -20,5 +20,5 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "npx ts-mocha -p ./tsconfig.json tests/holy-wars-vote.ts --timeout 120000"
-test-vote = "npx ts-mocha -p ./tsconfig.json tests/holy-wars-vote.ts --timeout 180000"
+test = "npx ts-mocha -p ./tsconfig.json tests/holy-wars-core.ts --timeout 120000"
+test-vote = "npx ts-mocha -p ./tsconfig.json tests/holy-wars-core.ts --timeout 180000"

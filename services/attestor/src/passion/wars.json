@@ -1,0 +1,23 @@
+{
+  "$comment": "Maps war_id -> detector. T7c (Proof of Passion). Side A is the side whose weight is weight_a; the formula computes an affinity a in [0,1] toward side A. Detector contracts are in services/attestor/src/passion/detectors/* and registered in score.ts.",
+  "wars": {
+    "1": {
+      "name": "Tabs vs Spaces",
+      "side_a": "tabs",
+      "side_b": "spaces",
+      "detector": "tabs_spaces"
+    },
+    "2": {
+      "name": "Vim vs Emacs",
+      "side_a": "vim",
+      "side_b": "emacs",
+      "detector": "vim_emacs"
+    },
+    "3": {
+      "name": "Dark vs Light",
+      "side_a": "dark",
+      "side_b": "light",
+      "detector": "unsupported"
+    }
+  }
+}

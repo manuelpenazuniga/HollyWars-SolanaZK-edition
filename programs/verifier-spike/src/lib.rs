@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 mod verifying_key;
 
-declare_id!("AwLH4verEbF86tSBtFSbpCKVzTAGsRL2c8M3ZPSXdMYa");
+declare_id!("FTRE4a6SSMs1Y7NdLPKRnFAfGv5QhZKaW7aQPBzPT3m");
 
 #[program]
 pub mod verifier_spike {

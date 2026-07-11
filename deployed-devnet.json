@@ -1,0 +1,11 @@
+{
+  "cluster": "devnet",
+  "programId": "FHj8baQvc17Qny8TvndTtkjh2iqKgu9ucQgynwD6J1WG",
+  "deployTx": "2UyKaczKrSzcHjfnog6qcAr9B3wX73VYegQi7JBMkaLxKxGpKxcmDoz2Dpt5UMeLnuo4iqTmywyn7X8hakqWntN7",
+  "wars": {
+    "1": { "topic": "Tabs vs Spaces", "pda": "BdNwMpyML8maKjuaHcZy2qAuh5qR6f8jnv9Ew4Pzp3c6" },
+    "2": { "topic": "Vim vs Emacs", "pda": "GgTzzSoBoEquH1sX4eV5RgtYQXwPj4WpYrdYf1taA5L2" },
+    "3": { "topic": "Dark vs Light mode", "pda": "93pTNKdXGHsJvMABFo3n2Xr9bYsYo7uKNdup4xzq7UBC" }
+  },
+  "note": "Config.attestor_pubkey currently = authority (HNFrd6...); real attestor is .keys/attestor.json (4Du6x55...). Set correctly for T7."
+}
