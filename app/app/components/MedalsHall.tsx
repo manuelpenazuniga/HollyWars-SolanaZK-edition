@@ -23,7 +23,7 @@ function MedalCard({ medal }: { medal: Medal }) {
   const sprite = MEDAL_SPRITES[medal.id] ?? "medal";
   return (
     <li
-      className={`panel p-5 flex flex-col items-center text-center transition-colors ${
+      className={`group panel p-5 flex flex-col items-center text-center transition-colors ${
         medal.claimed ? "border-gold/40" : "hover:border-bone/30"
       }`}
     >
@@ -31,7 +31,9 @@ function MedalCard({ medal }: { medal: Medal }) {
         sprite={sprite}
         rarity={medal.rarity}
         size={72}
-        className={medal.claimed ? "" : "opacity-60"}
+        className={`transition-transform duration-200 ease-out-strong group-hover:scale-110 ${
+          medal.claimed ? "" : "opacity-60"
+        }`}
       />
       <h3 className="font-sans font-bold mt-4 mb-1">{medal.name}</h3>
       <p className="font-sans text-sm text-bone/50 mb-4 flex-1">
@@ -70,7 +72,7 @@ export function MedalsHall() {
         </p>
       </div>
 
-      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger">
         {MEDALS.map((medal) => (
           <MedalCard key={medal.id} medal={medal} />
         ))}

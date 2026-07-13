@@ -1,8 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ATTESTOR_URL } from "@/lib/config";
+import { useSearchParams } from "next/navigation";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { VOTING_LIVE, GITHUB_CLIENT_ID, API, WAR_BY_SLUG } from "@/lib/config";
+import {
+  generateSecrets,
+  computeInner,
+  computeCommitment,
+  feToHex,
+  saveKit,
+  type IdentityKit,
+} from "@/lib/identity";
 
 export const ENLISTED_KEY = "holywars_enlisted";
 
@@ -43,14 +54,48 @@ const MOCK_WEIGHTS = [
   },
 ];
 
+const OAUTH_STATE_KEY = "holywars_oauth_state";
+const OAUTH_WAR_KEY = "holywars_oauth_war"; // warId
+const OAUTH_SLUG_KEY = "holywars_oauth_slug";
+
+// MEDIUM-1 recovery: if the census already has our leaf (a prior register landed), recover
+// (weight_a, weight_b, leaf_index) by brute-forcing the 9 weight pairs against the leaves.
+async function recoverKit(
+  warId: number,
+  inner: bigint,
+): Promise<{
+  weightA: number;
+  weightB: number;
+  leafIndex: number;
+  commitment: string;
+} | null> {
+  const r = await fetch(API.leaves(warId));
+  if (!r.ok) return null;
+  const rows = (await r.json()) as { leaf_index: number; commitment: string }[];
+  for (let wa = 1; wa <= 3; wa++) {
+    for (let wb = 1; wb <= 3; wb++) {
+      const c = feToHex(await computeCommitment(inner, wa, wb));
+      const match = rows.find((row) => row.commitment.toLowerCase() === c);
+      if (match) {
+        return {
+          weightA: wa,
+          weightB: wb,
+          leafIndex: match.leaf_index,
+          commitment: c,
+        };
+      }
+    }
+  }
+  return null;
+}
+
 function StepIndicator({ current }: { current: number }) {
   const steps = ["Wallet", "GitHub", "Passion"];
   return (
     <ol className="flex items-center justify-center gap-3 mb-8">
       {steps.map((label, i) => {
         const n = i + 1;
-        const state =
-          n < current ? "done" : n === current ? "active" : "todo";
+        const state = n < current ? "done" : n === current ? "active" : "todo";
         return (
           <li key={label} className="flex items-center gap-3">
             <span className="flex items-center gap-2">
@@ -75,7 +120,7 @@ function StepIndicator({ current }: { current: number }) {
             </span>
             {n < steps.length && (
               <span
-                className={`w-8 h-px ${n < current ? "bg-arcane" : "bg-panel-edge"}`}
+                className={`w-8 h-px transition-colors duration-300 ${n < current ? "bg-arcane" : "bg-panel-edge"}`}
                 aria-hidden
               />
             )}
@@ -113,35 +158,176 @@ function WeightGauge({
   );
 }
 
+interface LiveWeights {
+  war: string;
+  sideA: string;
+  sideB: string;
+  weightA: number;
+  weightB: number;
+}
+
 export function EnlistWizard() {
+  const search = useSearchParams();
+  const warSlug =
+    search.get("war") && WAR_BY_SLUG[search.get("war")!]
+      ? search.get("war")!
+      : "tabs-vs-spaces";
+  const warEntry = WAR_BY_SLUG[warSlug];
+
+  const { publicKey } = useWallet();
   const [step, setStep] = useState(1);
-  const [walletConnected, setWalletConnected] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
   const [enrollError, setEnrollError] = useState<string | null>(null);
-  const hasAttestor = !!ATTESTOR_URL;
+  const [busy, setBusy] = useState(false);
+  const [liveWeights, setLiveWeights] = useState<LiveWeights | null>(null);
+  // MEDIUM-3: the war the user actually enrolled in (recovered from sessionStorage on the
+  // OAuth callback), NOT the URL's warSlug (which resets to the default after the redirect).
+  const [enrolledSlug, setEnrolledSlug] = useState<string>(warSlug);
 
-  const advance = async () => {
-    if (step === 2 && hasAttestor) {
+  const canGoLive = VOTING_LIVE && !!GITHUB_CLIENT_ID;
+
+  // ── OAuth callback: exchange code → enroll → save identity kit ──
+  const handleCallback = useCallback(
+    async (code: string, state: string) => {
+      setBusy(true);
+      setEnrollError(null);
       try {
-        const res = await fetch(`${ATTESTOR_URL}/enroll`, {
+        const expected = sessionStorage.getItem(OAUTH_STATE_KEY);
+        if (!expected || expected !== state) {
+          throw new Error("OAuth state mismatch — restart enlistment");
+        }
+        const warId = Number(sessionStorage.getItem(OAUTH_WAR_KEY));
+        const slug = sessionStorage.getItem(OAUTH_SLUG_KEY) || warSlug;
+        if (!Number.isInteger(warId)) throw new Error("missing war context");
+        setEnrolledSlug(slug); // MEDIUM-3: display + CTA follow the war we actually enrolled in
+
+        // MEDIUM-1: reuse persisted secrets if a prior attempt was interrupted (register may
+        // have landed but the response was lost), else mint fresh — and persist BEFORE the
+        // network call so a lost response can never orphan an on-chain enrollment.
+        const pendingKey = `holywars_pending_${warId}`;
+        let trapdoor: bigint, nullifierSeed: bigint;
+        const pending = localStorage.getItem(pendingKey);
+        if (pending) {
+          const p = JSON.parse(pending) as { trapdoor: string; nullifierSeed: string };
+          trapdoor = BigInt(p.trapdoor);
+          nullifierSeed = BigInt(p.nullifierSeed);
+        } else {
+          ({ trapdoor, nullifierSeed } = generateSecrets());
+          localStorage.setItem(
+            pendingKey,
+            JSON.stringify({
+              trapdoor: trapdoor.toString(),
+              nullifierSeed: nullifierSeed.toString(),
+            }),
+          );
+        }
+        const inner = await computeInner(nullifierSeed, trapdoor);
+
+        const finalize = (
+          weightA: number,
+          weightB: number,
+          leafIndex: number,
+          commitment: string,
+        ) => {
+          const kit: IdentityKit = {
+            warId,
+            trapdoor: trapdoor.toString(),
+            nullifierSeed: nullifierSeed.toString(),
+            weightA,
+            weightB,
+            leafIndex,
+            commitment,
+          };
+          saveKit(kit);
+          localStorage.setItem(ENLISTED_KEY, "1");
+          localStorage.removeItem(pendingKey);
+          setLiveWeights({ war: slug, sideA: "SIDE A", sideB: "SIDE B", weightA, weightB });
+          setGithubConnected(true);
+          setStep(3);
+        };
+
+        const res = await fetch(API.enroll, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ github: MOCK_GITHUB.username }),
+          body: JSON.stringify({
+            oauth_code: code,
+            war_id: warId,
+            inner: feToHex(inner),
+          }),
         });
-        if (!res.ok) throw new Error(`attestor: ${res.status}`);
-      } catch (err) {
-        setEnrollError(
-          err instanceof Error ? err.message : "attestor unreachable",
-        );
-        return;
+        if (!res.ok) {
+          const b = (await res.json().catch(() => ({}))) as {
+            error?: string;
+            reason?: string;
+          };
+          // MEDIUM-1 recovery: already enrolled (a prior attempt's register landed). Recover
+          // the kit by brute-forcing the 9 weight pairs against the census leaves.
+          if (res.status === 409) {
+            const recovered = await recoverKit(warId, inner);
+            if (recovered) {
+              finalize(
+                recovered.weightA,
+                recovered.weightB,
+                recovered.leafIndex,
+                recovered.commitment,
+              );
+              return;
+            }
+          }
+          throw new Error(b.reason || b.error || `enroll failed (${res.status})`);
+        }
+        const data = (await res.json()) as {
+          leaf_index: number;
+          commitment: string;
+          weight_a: number;
+          weight_b: number;
+        };
+        finalize(data.weight_a, data.weight_b, data.leaf_index, data.commitment);
+      } catch (e) {
+        setEnrollError(e instanceof Error ? e.message : "enrollment failed");
+      } finally {
+        sessionStorage.removeItem(OAUTH_STATE_KEY);
+        setBusy(false);
+        // strip ?code&state from the URL so a refresh doesn't re-post a spent code
+        window.history.replaceState({}, "", `/enlist?war=${warSlug}`);
       }
-    }
-    setStep((s) => Math.min(s + 1, 3));
-  };
+    },
+    [warSlug],
+  );
 
   useEffect(() => {
-    if (step === 3) localStorage.setItem(ENLISTED_KEY, "1");
-  }, [step]);
+    const code = search.get("code");
+    const state = search.get("state");
+    if (canGoLive && code && state) {
+      setStep(2);
+      void handleCallback(code, state);
+    }
+  }, [search, canGoLive, handleCallback]);
+
+  // ── start GitHub OAuth (live) ──
+  const startOAuth = () => {
+    if (!warEntry) return;
+    const state =
+      typeof crypto?.randomUUID === "function"
+        ? crypto.randomUUID()
+        : String(Math.random()).slice(2);
+    sessionStorage.setItem(OAUTH_STATE_KEY, state);
+    sessionStorage.setItem(OAUTH_WAR_KEY, String(warEntry.warId));
+    sessionStorage.setItem(OAUTH_SLUG_KEY, warSlug);
+    const redirectUri = `${window.location.origin}/enlist?war=${warSlug}`;
+    const url =
+      `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(GITHUB_CLIENT_ID)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&scope=read:user&state=${encodeURIComponent(state)}`;
+    window.location.href = url;
+  };
+
+  // ── demo-mode advance (unchanged behavior) ──
+  const advanceDemo = () => setStep((s) => Math.min(s + 1, 3));
+
+  useEffect(() => {
+    if (!canGoLive && step === 3) localStorage.setItem(ENLISTED_KEY, "1");
+  }, [step, canGoLive]);
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -155,9 +341,14 @@ export function EnlistWizard() {
           in; your commit history sets your weight; your secrets never leave
           this browser.
         </p>
-        {!hasAttestor && (
+        {canGoLive ? (
+          <p className="font-mono text-xs text-arcane mt-3">
+            ▮ LIVE — enlisting for{" "}
+            <span className="text-bone">{warSlug}</span> on devnet
+          </p>
+        ) : (
           <p className="font-mono text-xs text-gold mt-3">
-            ▮ DEMO MODE — NEXT_PUBLIC_ATTESTOR_URL not set
+            ▮ DEMO MODE — enrollment not yet enabled here
           </p>
         )}
       </div>
@@ -166,51 +357,74 @@ export function EnlistWizard() {
 
       <div className="panel p-6 md:p-8">
         {step === 1 && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-rise">
             <div>
               <h3 className="font-sans font-bold text-xl mb-1">
                 Connect your wallet
               </h3>
               <p className="font-sans text-sm text-bone/60">
-                Only used to receive your medal later — the ballot box will
-                never see it.
+                Optional — only used to receive your medal later. The ballot box
+                never sees it, and you can skip and vote without one.
               </p>
             </div>
 
-            {walletConnected ? (
+            {publicKey ? (
               <div className="space-y-3">
                 <div className="panel-inset p-4 font-mono text-sm">
                   <p className="text-gold">✓ WALLET CONNECTED</p>
-                  <p className="text-bone/50 mt-1">7xKp…3VmN · devnet</p>
+                  <p className="text-bone/50 mt-1 break-all">
+                    {publicKey.toBase58()} · devnet
+                  </p>
                 </div>
-                <button onClick={advance} className="btn-primary w-full">
+                <button
+                  onClick={() => setStep(2)}
+                  className="btn-primary w-full"
+                >
                   Continue →
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => setWalletConnected(true)}
-                className="btn-primary w-full"
-              >
-                Connect wallet
-              </button>
+              <div className="space-y-3">
+                {/* real wallet-adapter connect (Phantom / Solflare via Wallet Standard) */}
+                <div className="[&_.wallet-adapter-button]:!w-full [&_.wallet-adapter-button]:!justify-center">
+                  <WalletMultiButton />
+                </div>
+                <button
+                  onClick={() => setStep(2)}
+                  className="btn-ghost w-full"
+                >
+                  Skip — I&apos;ll add a wallet for the medal later →
+                </button>
+              </div>
             )}
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-rise">
             <div>
               <h3 className="font-sans font-bold text-xl mb-1">
                 Connect your GitHub
               </h3>
               <p className="font-sans text-sm text-bone/60">
-                One aged, active GitHub account = one census entry per war.
-                A thousand wallets won&apos;t get you a second ballot.
+                One aged, active GitHub account = one census entry per war. A
+                thousand wallets won&apos;t get you a second ballot.
               </p>
             </div>
 
-            {githubConnected ? (
+            {enrollError && (
+              <p className="font-mono text-xs text-p1">{enrollError}</p>
+            )}
+
+            {canGoLive ? (
+              <button
+                onClick={startOAuth}
+                disabled={busy}
+                className="btn-primary w-full disabled:opacity-50"
+              >
+                {busy ? "Enlisting…" : "Authorize GitHub →"}
+              </button>
+            ) : githubConnected ? (
               <div className="space-y-3">
                 <div className="panel-inset p-4 font-mono text-sm space-y-1">
                   <p className="text-gold">✓ GITHUB VERIFIED</p>
@@ -221,10 +435,7 @@ export function EnlistWizard() {
                     {MOCK_GITHUB.repos}
                   </p>
                 </div>
-                {enrollError && (
-                  <p className="font-mono text-xs text-p1">{enrollError}</p>
-                )}
-                <button onClick={advance} className="btn-arcane w-full">
+                <button onClick={advanceDemo} className="btn-arcane w-full">
                   Measure my passion →
                 </button>
               </div>
@@ -240,7 +451,7 @@ export function EnlistWizard() {
         )}
 
         {step === 3 && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-rise">
             <div>
               <h3 className="font-sans font-bold text-xl mb-1">
                 Your passion, weighed
@@ -251,30 +462,58 @@ export function EnlistWizard() {
               </p>
             </div>
 
-            <ul className="space-y-3">
-              {MOCK_WEIGHTS.map((w) => (
-                <li key={w.war} className="panel-inset p-4 space-y-3">
+            {canGoLive && liveWeights ? (
+              <ul className="space-y-3">
+                <li className="panel-inset p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-sans font-medium">{w.war}</span>
+                    <span className="font-sans font-medium">
+                      {liveWeights.war}
+                    </span>
                     <span className="hud-label">weighed</span>
                   </div>
                   <div className="flex flex-wrap gap-x-8 gap-y-2">
-                    <WeightGauge label={w.sideA} weight={w.weightA} tone="p1" />
-                    <WeightGauge label={w.sideB} weight={w.weightB} tone="p2" />
+                    <WeightGauge
+                      label={liveWeights.sideA}
+                      weight={liveWeights.weightA}
+                      tone="p1"
+                    />
+                    <WeightGauge
+                      label={liveWeights.sideB}
+                      weight={liveWeights.weightB}
+                      tone="p2"
+                    />
                   </div>
                   <p className="font-mono text-[11px] text-bone/40">
-                    evidence: {w.evidence}
+                    signed by the attestor · your leaf is in the census tree
                   </p>
-                  {w.hypocrisy && (
-                    <p className="font-mono text-[11px] text-gold border-t border-panel-edge pt-2">
-                      ⚠ HYPOCRISY ADVISORY — {w.hypocrisy}
-                    </p>
-                  )}
                 </li>
-              ))}
-            </ul>
+              </ul>
+            ) : (
+              <ul className="space-y-3">
+                {MOCK_WEIGHTS.map((w) => (
+                  <li key={w.war} className="panel-inset p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans font-medium">{w.war}</span>
+                      <span className="hud-label">weighed</span>
+                    </div>
+                    <div className="flex flex-wrap gap-x-8 gap-y-2">
+                      <WeightGauge label={w.sideA} weight={w.weightA} tone="p1" />
+                      <WeightGauge label={w.sideB} weight={w.weightB} tone="p2" />
+                    </div>
+                    <p className="font-mono text-[11px] text-bone/40">
+                      evidence: {w.evidence}
+                    </p>
+                    {w.hypocrisy && (
+                      <p className="font-mono text-[11px] text-gold border-t border-panel-edge pt-2">
+                        ⚠ HYPOCRISY ADVISORY — {w.hypocrisy}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
 
-            <div className="border border-arcane/40 bg-arcane/10 p-5 text-center space-y-2">
+            <div className="border border-arcane/40 bg-arcane/10 p-5 text-center space-y-2 animate-stamp [animation-delay:180ms]">
               <p className="font-pixel text-sm text-arcane">YOU ARE CENSUSED</p>
               <p className="font-sans text-sm text-bone/70">
                 The attestor signed your weights without ever learning your
@@ -282,8 +521,11 @@ export function EnlistWizard() {
               </p>
             </div>
 
-            <Link href="/" className="btn-primary w-full text-center">
-              Enter the War Room →
+            <Link
+              href={canGoLive ? `/war/${enrolledSlug}` : "/"}
+              className="btn-primary w-full text-center"
+            >
+              {canGoLive ? "Cast your vote →" : "Enter the War Room →"}
             </Link>
           </div>
         )}

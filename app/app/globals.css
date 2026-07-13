@@ -37,10 +37,23 @@
     @apply bg-void/60 border border-panel-edge;
   }
 
+  /* Pressable: instant tactile feedback — the UI is listening.
+     Transform gets a strong ease-out; colors keep plain ease. */
+  .press {
+    transition:
+      transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease;
+  }
+  .press:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
   /* Buttons: modern, flat, decisive */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-sans font-medium text-sm
-           border transition-colors duration-150 select-none;
+    @apply press inline-flex items-center justify-center gap-2 px-5 py-2.5 font-sans font-medium text-sm
+           border select-none;
   }
 
   .btn-primary {
@@ -58,6 +71,7 @@
   .input-console {
     @apply w-full bg-void border border-panel-edge text-bone px-4 py-3 font-mono text-sm
            focus:outline-none focus:border-arcane/70 placeholder:text-bone/25;
+    transition: border-color 150ms ease;
   }
 
   /* Terminal panel — CRT lives ONLY inside these */
@@ -102,6 +116,23 @@
 
   .pixelated {
     image-rendering: pixelated;
+  }
+
+  /* Staggered section entrance — decorative, never blocks interaction */
+  .stagger > * {
+    animation: rise 0.35s cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+  .stagger > *:nth-child(2) {
+    animation-delay: 60ms;
+  }
+  .stagger > *:nth-child(3) {
+    animation-delay: 120ms;
+  }
+  .stagger > *:nth-child(4) {
+    animation-delay: 180ms;
+  }
+  .stagger > *:nth-child(n + 5) {
+    animation-delay: 240ms;
   }
 
   /* Quiet, square scrollbars inside console panels */

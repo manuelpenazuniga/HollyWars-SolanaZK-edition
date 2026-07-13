@@ -9,11 +9,37 @@ function warNumber(war: War, allWars: War[]): string {
   return String(allWars.findIndex((w) => w.id === war.id) + 1).padStart(3, "0");
 }
 
-function OfflineBadge() {
+// Always-on data-origin indicator so live devnet reads are never confused with the
+// mock sample shown on RPC failure (AUD-11).
+function DataOriginBadge({
+  healthy,
+  loading,
+}: {
+  healthy: boolean;
+  loading: boolean;
+}) {
+  if (loading && !healthy) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-bone/25 bg-bone/5">
+        <span className="w-1.5 h-1.5 bg-bone/40 animate-live-blink" aria-hidden />
+        <span className="hud-label text-bone/50">CONNECTING · devnet</span>
+      </span>
+    );
+  }
+  if (healthy) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-arcane/40 bg-arcane/10">
+        <span className="w-1.5 h-1.5 bg-arcane animate-live-blink" aria-hidden />
+        <span className="hud-label text-arcane">LIVE · reading devnet</span>
+      </span>
+    );
+  }
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-gold/40 bg-gold/10">
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-gold/50 bg-gold/10">
       <span className="w-1.5 h-1.5 bg-gold" aria-hidden />
-      <span className="hud-label text-gold">OFFLINE</span>
+      <span className="hud-label text-gold">
+        DEMO DATA · devnet unreachable — sample tallies
+      </span>
     </span>
   );
 }
@@ -68,7 +94,7 @@ function WarCard({
 }) {
   return (
     <Link href={`/war/${war.id}`} className="block group">
-      <div className="panel p-5 transition-colors duration-150 group-hover:border-bone/30 h-full">
+      <div className="panel p-5 transition-[border-color,transform] duration-150 ease-out-strong group-hover:border-bone/30 group-hover:-translate-y-0.5 group-active:translate-y-0 h-full">
         <div className="flex items-center justify-between mb-4">
           <span className="hud-label">
             War Nº {warNumber(war, allWars)}
@@ -97,10 +123,11 @@ function FieldComms({ cries }: { cries: BattleCry[] }) {
         </span>
       </div>
       <ul className="p-4 space-y-2 h-44 overflow-y-auto console-scroll">
-        {cries.map((cry) => (
+        {cries.map((cry, i) => (
           <li
             key={cry.id}
             className="flex items-baseline gap-2.5 font-mono text-[13px] animate-feed-in"
+            style={{ animationDelay: `${Math.min(i * 30, 240)}ms` }}
           >
             <span
               className={`shrink-0 px-1.5 font-pixel text-[9px] leading-4 ${
@@ -119,16 +146,16 @@ function FieldComms({ cries }: { cries: BattleCry[] }) {
 }
 
 export function WarRoom() {
-  const { wars, healthy, cries } = useLiveWars();
+  const { wars, healthy, loading, cries } = useLiveWars();
 
   const displayWars = wars.length > 0 ? wars : WARS;
   const displayCries = cries.length > 0 ? cries : BATTLE_CRIES;
   const [flagship, ...rest] = displayWars;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 stagger">
       <div className="flex items-center gap-3">
-        {!healthy && <OfflineBadge />}
+        <DataOriginBadge healthy={healthy} loading={loading} />
       </div>
 
       <FlagshipWar war={flagship} allWars={displayWars} />

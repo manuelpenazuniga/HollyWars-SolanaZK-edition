@@ -101,11 +101,15 @@ export function Battlefront({
             className={`flex-1 animate-capture ${BLOCK_CLASS[s]}`}
           />
         ))}
+        {/* Full-width rail moved with translateX(%) so the cursor marches
+            (GPU transform) instead of teleporting when the tally shifts. */}
         <div
-          className="absolute top-0 bottom-0 w-1 bg-bone animate-cursor-blink"
-          style={{ left: `calc(${pctA}% - 2px)` }}
+          className="absolute inset-0 pointer-events-none transition-transform duration-500 ease-in-out-strong"
+          style={{ transform: `translateX(${pctA}%)` }}
           aria-hidden
-        />
+        >
+          <div className="absolute top-0 bottom-0 -left-0.5 w-1 bg-bone animate-cursor-blink" />
+        </div>
       </div>
 
       <div className="flex items-center justify-between mt-1.5">
