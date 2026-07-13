@@ -41,6 +41,7 @@ const config: Config = {
         "live-blink": "cursor-blink 1.6s steps(2, jump-none) infinite",
         "rise": "rise 0.35s cubic-bezier(0.23, 1, 0.32, 1) both",
         "stamp": "stamp 0.3s cubic-bezier(0.23, 1, 0.32, 1) both",
+        "bob": "bob 1.8s steps(2, jump-none) infinite",
       },
       keyframes: {
         "cursor-blink": {
@@ -68,6 +69,11 @@ const config: Config = {
         stamp: {
           "0%": { transform: "scale(1.04)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        // mascot idle bob — 2px, stepped like a retro sprite loop
+        bob: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-2px)" },
         },
       },
     },

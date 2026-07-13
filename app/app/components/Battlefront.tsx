@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { War } from "@/lib/mock";
 
 /* ── The signature element ──────────────────────────────────────────────
@@ -66,26 +67,49 @@ export function Battlefront({
     <div>
       {variant === "hero" && (
         <div className="flex items-end justify-between mb-3">
-          <div>
-            <span className="hud-label text-p1">{war.sideA}</span>
-            <div className="mt-1">
-              <PixelDigits
-                value={war.tallyA}
-                className="text-p1 text-3xl md:text-5xl"
-              />
+          <div className="flex items-end gap-4">
+            {/* Champions face off across the battlefront — decorative sprites */}
+            <Image
+              src="/img/purple.png"
+              alt=""
+              width={61}
+              height={52}
+              unoptimized
+              className="pixelated select-none hidden md:block animate-bob"
+              aria-hidden
+            />
+            <div>
+              <span className="hud-label text-p1">{war.sideA}</span>
+              <div className="mt-1">
+                <PixelDigits
+                  value={war.tallyA}
+                  className="text-p1 text-3xl md:text-5xl"
+                />
+              </div>
             </div>
           </div>
           <span className="font-pixel text-bone/25 text-sm md:text-lg pb-1.5">
             VS
           </span>
-          <div className="text-right">
-            <span className="hud-label text-p2">{war.sideB}</span>
-            <div className="mt-1">
-              <PixelDigits
-                value={war.tallyB}
-                className="text-p2 text-3xl md:text-5xl"
-              />
+          <div className="flex items-end gap-4">
+            <div className="text-right">
+              <span className="hud-label text-p2">{war.sideB}</span>
+              <div className="mt-1">
+                <PixelDigits
+                  value={war.tallyB}
+                  className="text-p2 text-3xl md:text-5xl"
+                />
+              </div>
             </div>
+            <Image
+              src="/img/green.png"
+              alt=""
+              width={54}
+              height={52}
+              unoptimized
+              className="pixelated select-none hidden md:block animate-bob [animation-delay:0.9s]"
+              aria-hidden
+            />
           </div>
         </div>
       )}

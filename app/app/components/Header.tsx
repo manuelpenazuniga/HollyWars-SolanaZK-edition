@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { ENLISTED_KEY } from "@/components/EnlistWizard";
@@ -54,12 +55,24 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-void/95 backdrop-blur-sm border-b border-panel-edge">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="group shrink-0">
-          <span className="font-pixel text-base md:text-lg text-bone group-hover:text-arcane transition-colors">
-            HOLY WARS
-          </span>
-          <span className="hidden lg:block hud-label mt-0.5">
-            The Eternal Scoreboard
+        <Link href="/" className="group shrink-0 flex items-center gap-2.5">
+          <Image
+            src="/img/logo.png"
+            alt=""
+            width={65}
+            height={32}
+            unoptimized
+            priority
+            className="pixelated select-none"
+            aria-hidden
+          />
+          <span>
+            <span className="block font-pixel text-base md:text-lg text-bone group-hover:text-arcane transition-colors">
+              HOLY WARS
+            </span>
+            <span className="hidden lg:block hud-label mt-0.5">
+              The Eternal Scoreboard
+            </span>
           </span>
         </Link>
 

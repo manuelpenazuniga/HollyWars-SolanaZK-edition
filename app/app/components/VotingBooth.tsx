@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useSingleWar } from "@/hooks/useSingleWar";
 import { Battlefront } from "@/components/Battlefront";
@@ -119,7 +120,16 @@ export function VotingBooth() {
 
   if (!war) {
     return (
-      <div className="max-w-2xl mx-auto panel p-10 text-center space-y-3">
+      <div className="max-w-2xl mx-auto panel p-10 text-center space-y-3 animate-rise">
+        <Image
+          src="/img/green.png"
+          alt=""
+          width={67}
+          height={64}
+          unoptimized
+          className="pixelated select-none mx-auto opacity-80"
+          aria-hidden
+        />
         <h2 className="font-pixel text-xl text-bone">404 — NO SUCH WAR</h2>
         <p className="font-sans text-sm text-bone/60">
           This battlefield does not exist. Pick a real fight instead.
@@ -282,15 +292,28 @@ export function VotingBooth() {
             <span className="w-2 h-2 bg-gold animate-live-blink" aria-hidden />
             <span className="hud-label text-gold">Census check</span>
           </div>
-          <p className="font-pixel text-sm text-bone">
-            THE CENSUS DOESN&apos;T KNOW YOU
-          </p>
-          <p className="font-sans text-sm text-bone/70 max-w-lg">
-            Voting here isn&apos;t gated by a login — it&apos;s gated by
-            mathematics. The zero-knowledge proof needs the Merkle path to
-            <em> your</em> leaf in the census tree. No enlistment, no leaf; no
-            leaf, no proof; no proof, no vote.
-          </p>
+          <div className="flex items-start gap-5">
+            <Image
+              src="/img/green.png"
+              alt=""
+              width={59}
+              height={56}
+              unoptimized
+              className="pixelated select-none hidden sm:block shrink-0 mt-1"
+              aria-hidden
+            />
+            <div className="space-y-4">
+              <p className="font-pixel text-sm text-bone">
+                THE CENSUS DOESN&apos;T KNOW YOU
+              </p>
+              <p className="font-sans text-sm text-bone/70 max-w-lg">
+                Voting here isn&apos;t gated by a login — it&apos;s gated by
+                mathematics. The zero-knowledge proof needs the Merkle path to
+                <em> your</em> leaf in the census tree. No enlistment, no leaf;
+                no leaf, no proof; no proof, no vote.
+              </p>
+            </div>
+          </div>
           <Link
             href={`/enlist?war=${warSlug}`}
             className="btn-primary"
@@ -378,6 +401,15 @@ export function VotingBooth() {
 
         {voteComplete && (
           <div className="border border-gold/40 bg-gold/10 p-5 text-center space-y-2 animate-stamp">
+            <Image
+              src="/img/purple.png"
+              alt=""
+              width={56}
+              height={48}
+              unoptimized
+              className="pixelated select-none mx-auto"
+              aria-hidden
+            />
             <p className="font-pixel text-sm text-gold">VOTE FORGED</p>
             <p className="font-sans text-sm text-bone/70">
               Anonymous. Weighted. Eternal. Your nullifier is burned — voting
