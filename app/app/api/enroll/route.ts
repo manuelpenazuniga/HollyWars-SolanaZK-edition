@@ -86,10 +86,16 @@ export async function POST(request: Request) {
 
     let githubUser: { id: number; login: string; created_at: string; public_repos: number };
     let publicEventsCount: number;
+    // Held in-memory only, for authenticated Proof-of-Passion scoring below.
+    // Never persisted/logged/returned (INV-14 renegotiated). Without it the scorer
+    // hits unauthenticated GitHub (60 req/h per shared Vercel IP) and its ~100
+    // sequential calls trigger a multi-minute rate-limit backoff → function 504.
+    let accessToken: string;
     try {
       const result = await oauth.verify(oauth_code as string);
       githubUser = result.user;
       publicEventsCount = result.publicEventsCount;
+      accessToken = result.accessToken;
     } catch (err: any) {
       return NextResponse.json(
         { error: `OAuth failed: ${err.message}` },
@@ -121,7 +127,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const scorer = createPassionScorer();
+    const scorer = createPassionScorer({ token: accessToken });
 
     let weight_a: number;
     let weight_b: number;

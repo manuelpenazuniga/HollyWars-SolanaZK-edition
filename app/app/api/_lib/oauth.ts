@@ -9,6 +9,10 @@ export interface OAuthClient {
   verify(code: string): Promise<{
     user: GitHubUser;
     publicEventsCount: number;
+    // INV-14 (renegotiated): the token is handed back for IN-MEMORY use during
+    // this same request (authenticated Proof-of-Passion scoring) and is never
+    // persisted, logged, or returned to the client. It dies with the request.
+    accessToken: string;
   }>;
 }
 
@@ -56,7 +60,7 @@ export function createOAuthClient(
 
     let user: GitHubUser;
     let publicEventsCount = 0;
-    try {
+    {
       const userRes = await fetchImpl("https://api.github.com/user", {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -106,11 +110,11 @@ export function createOAuthClient(
           ).length;
         }
       }
-    } finally {
-      // INV-14: discard token
     }
 
-    return { user, publicEventsCount };
+    // INV-14 (renegotiated): return the token for same-request authenticated
+    // scoring only. The caller must not persist or log it.
+    return { user, publicEventsCount, accessToken };
   }
 
   return { verify };

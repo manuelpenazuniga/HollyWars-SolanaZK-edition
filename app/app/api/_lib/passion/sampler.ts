@@ -25,8 +25,10 @@ import type {
   PassionUser,
 } from "./types";
 
-const MAX_REPOS = 5;
-const MAX_FILES = 20;
+// Worst-case GitHub calls ≈ 1 (list) + MAX_REPOS × (1 tree + MAX_FILES contents),
+// all sequential. Kept small so /enroll finishes well inside the serverless budget.
+const MAX_REPOS = 3;
+const MAX_FILES = 10;
 const MAX_FILE_BYTES = 100 * 1024;
 
 const SOURCE_EXTS = new Set<string>([

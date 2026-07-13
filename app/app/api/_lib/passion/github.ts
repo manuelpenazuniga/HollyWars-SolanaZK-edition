@@ -26,6 +26,11 @@ const GITHUB_API = "https://api.github.com";
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_PAGES = 5;
+// This client runs inside a serverless function with a hard ~60s budget. Never
+// block on a rate-limit reset that is further out than this — fail fast and let
+// the sampler degrade (per-repo/file errors are already caught) instead of
+// hanging the whole /enroll request until Vercel kills it with a 504.
+const MAX_BACKOFF_MS = 8_000;
 
 export interface GitHubClient {
   getUserById(id: string): Promise<GhUserById | null>;
@@ -168,10 +173,15 @@ export class HttpGitHubClient implements GitHubClient {
           const remaining = res.headers.get("x-ratelimit-remaining");
           const reset = res.headers.get("x-ratelimit-reset");
           if (remaining === "0" && reset) {
-            const waitMs = await this.backoffFor(reset);
-            await this.sleep(waitMs);
-            attempt++;
-            continue;
+            const waitMs = this.backoffFor(reset);
+            // Only wait for a reset that lands within our serverless budget;
+            // otherwise return the 403 so the caller degrades instead of hanging.
+            if (waitMs <= MAX_BACKOFF_MS && attempt < this.maxRetries) {
+              await this.sleep(waitMs);
+              attempt++;
+              continue;
+            }
+            return res;
           }
         }
 
@@ -196,11 +206,11 @@ export class HttpGitHubClient implements GitHubClient {
     );
   }
 
-  private async backoffFor(resetHeader: string): Promise<number> {
+  private backoffFor(resetHeader: string): number {
     const resetEpoch = Number(resetHeader);
-    if (!Number.isFinite(resetEpoch)) return 60_000;
+    // Unparseable reset → report a wait past MAX_BACKOFF_MS so the caller fails fast.
+    if (!Number.isFinite(resetEpoch)) return MAX_BACKOFF_MS + 1;
     const delta = resetEpoch * 1000 - Date.now();
-    const capped = Math.max(1_000, Math.min(delta + Math.random() * 2000, 300_000));
-    return capped;
+    return Math.max(1_000, delta + Math.random() * 500);
   }
 }
