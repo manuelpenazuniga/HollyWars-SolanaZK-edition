@@ -28,5 +28,19 @@ export const WAR_BY_SLUG: Record<string, { warId: number; pda: PublicKey }> = {
   "dark-vs-light": { warId: 3, pda: WAR_PDAS[2].pda },
 };
 
+// Backend runs as same-origin Next API routes — no cross-origin URL needed. The whole
+// live enroll+vote path stays behind this single gate (set only once the backend env is
+// verified in prod), so demo mode is the automatic, never-throwing fallback (cut-line C).
+export const VOTING_LIVE = process.env.NEXT_PUBLIC_VOTING_LIVE === "1";
+
+export const API = {
+  enroll: "/api/enroll",
+  relayVote: "/api/relay-vote",
+  leaves: (warId: number) => `/api/census/${warId}/leaves`,
+};
+
+export const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID ?? "";
+
+// Back-compat (unused by the live path; kept so any old import doesn't break the build).
 export const RELAYER_URL = process.env.NEXT_PUBLIC_RELAYER_URL ?? "";
 export const ATTESTOR_URL = process.env.NEXT_PUBLIC_ATTESTOR_URL ?? "";
